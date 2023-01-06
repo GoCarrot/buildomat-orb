@@ -37,7 +37,7 @@ IdentifyDependents() {
 
 BuildCommands() {
   local RAW_API_CALLS
-  RAW_API_CALLS=$(echo "$DEPENDENTS" |  jq -r 'map({url: "https://circleci.com/api/v2/project/\(.project_slug)/pipeline", data: ({branch: .branch, parameters: {in_build_account_slug: .build_account, in_deploy_account_slug: (.deploy_account // "")}} | tojson | @sh)}) | map("curl -XPOST --data \(.data) -H \"Content-Type: application/json\" -H \("Circle-Token: \($ENV.CIRCLE_TOKEN)" | @sh) \(.url)") | join("\n")')
+  RAW_API_CALLS=$(echo "$DEPENDENTS" |  jq -r 'map({url: "https://circleci.com/api/v2/project/\(.project_slug)/pipeline", data: ({branch: .branch, parameters: {in_build_account_slug: .build_account, in_deploy_account_slug: (.deploy_account // "")}} | tojson | @sh)}) | map("curl -XPOST --data \(.data) -H \"Content-Type: application/json\" -H \("Circle-Token: \($ENV.CIRCLE_API_TOKEN)" | @sh) \(.url)") | join("\n")')
   # This read will encounter EOF (that's the point), and we want to ignore that "error".
   set +e
   IFS=$'\n' read -r -a API_CALLS -d "" <<< "$RAW_API_CALLS"

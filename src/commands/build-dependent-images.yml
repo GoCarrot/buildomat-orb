@@ -32,7 +32,7 @@ steps:
   - run:
       name: "Build dependent images"
       environment:
-        D_REGION: << parameters.region >>
-        D_AMI_NAME_PREFIX: << parameters.ami_name_prefix >>
-        D_BUILD_ACCOUNT_SLUG: << parameters.build_account_slug >>
+        I_REGION: << parameters.region >>
+        I_AMI_NAME_PREFIX: << parameters.ami_name_prefix >>
+        I_BUILD_ACCOUNT_SLUG: << parameters.build_account_slug >>
       command: << include(scripts/build_dependent_images.sh) >>
