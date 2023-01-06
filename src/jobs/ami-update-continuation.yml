@@ -1,0 +1,61 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: >
+  Continues a pipeline with the given region, deployomat_canonical_slug, and account_canonical_slug. Intended to be used
+  as part of a workflow triggered by an upstream AMI being updated.
+
+docker:
+  - image: cimg/base:stable
+
+resource_class: small
+
+parameters:
+  region:
+    type: string
+    description: "The AWS region to run in, can be an env var"
+  deploy_account_slug:
+    type: string
+    description: "The name of the account to deploy in, can be an env var"
+    default: ''
+  build_account_slug:
+    type: string
+    description: "The accountomat canonical slug of the account containing deployomat and to build in, can be an env var"
+  continuation_configuration_path:
+    type: string
+    description: The path to the configuration that will be passed to the continue API
+    default: ".circleci/continue.yml"
+  before_continuation_steps:
+    type: steps
+    description: "Steps to execute prior to continuing the workflow, can modify continue_params.json"
+    default: []
+  continuation_parameters:
+    default: ''
+    description: "Comma separated list of additional parameters to set for the continued pipeline e.g. 'foo=bar,baz=boo'"
+    type: string
+
+
+steps:
+  - checkout
+  - ami-update-continuation:
+      region: << parameters.region >>
+      deploy_account_slug: << parameters.deploy_account_slug >>
+      build_account_slug: << parameters.build_account_slug >>
+      continuation_parameters: << parameters.continuation_parameters >>
+  - when:
+      condition: << parameters.before_continuation_steps >>
+      steps: << parameters.before_continuation_steps >>
+  - continuation/continue:
+      configuration_path: << parameters.continuation_configuration_path >>
+      parameters: continue_params.json
