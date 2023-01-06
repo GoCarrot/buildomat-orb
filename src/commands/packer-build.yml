@@ -1,0 +1,101 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: "Run `packer build`."
+
+parameters:
+  out_log:
+    type: string
+    default: "teak-orb-packer.build.log"
+    description: "Log file for build command"
+
+  out_path:
+    type: string
+    default: "/tmp/teak-orb-packer"
+    description: "Path log will be stored in"
+
+  path:
+    type: "string"
+    description: "Path to the packer file to build"
+
+  only:
+    type: string
+    description: "Specific list of builders to run"
+    default: ""
+
+  except:
+    type: string
+    description: "List of builders to omit"
+    default: ""
+
+  artifact_path:
+    type: string
+    description: "If set, will upload all files at the path as job artifacts"
+    default: ""
+
+  var:
+    default: ''
+    description: "Comma separated list of vars to set, e.g. 'foo=bar,baz=boo'"
+    type: string
+
+  packer_log:
+    default: '0'
+    description: "Set to 1 to enable verbose packer logging"
+    type: string
+
+  packer_working_directory:
+    default: '.'
+    description: "The directory packer should be run in, relative to the base directory of the project."
+    type: string
+
+steps:
+  - run:
+      name: Packer Build
+      working_directory: << parameters.packer_working_directory >>
+      environment:
+        I_OUT_LOG: << parameters.out_log >>
+        I_OUT_PATH: << parameters.out_path >>
+        I_PATH: << parameters.path >>
+        I_ONLY: << parameters.only >>
+        I_EXCEPT: << parameters.except >>
+        I_VAR: << parameters.var >>
+        I_PACKER_LOG: << parameters.packer_log >>
+      command: |
+        mkdir -p << parameters.out_path >>
+
+        BUILD_ARGS="-color=false -timestamp-ui"
+
+        if [[ -n "<< parameters.only >>" ]]; then
+          BUILD_ARGS="$BUILD_ARGS -only=<< parameters.only >>"
+        fi
+
+        if [[ -n "<< parameters.except >>" ]]; then
+          BUILD_ARGS="$BUILD_ARGS -except=<< parameters.except >>"
+        fi
+
+        if [[ -n "<< parameters.var >>" ]]; then
+            for var in $(echo "<< parameters.var >>" | tr ',' '\n'); do
+                BUILD_ARGS="$BUILD_ARGS -var $var"
+            done
+        fi
+
+        PACKER_LOG=<< parameters.packer_log >> ~/packer/packer build $BUILD_ARGS << parameters.path >> | tee << parameters.out_path >>/<< parameters.out_log >>
+  - store_artifacts:
+      name: "Store log file"
+      path: << parameters.out_path >>/<< parameters.out_log >>
+  - when:
+      condition: << parameters.artifact_path >>
+      steps:
+        - store_artifacts:
+            path: << parameters.artifact_path >>

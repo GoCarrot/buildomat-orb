@@ -1,0 +1,133 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: >
+  Run packer build
+
+docker:
+  - image: << parameters.image >>
+
+resource_class: small
+
+circleci_ip_ranges: true
+
+parameters:
+  version:
+    description: "Version of packer to use"
+    type: string
+    default: "1.8.5"
+
+  platform:
+    description: "Platform packer will run on"
+    type: string
+    default: "linux_amd64"
+
+  github_releases_user:
+    type: string
+    default: ""
+    description: >
+      If set, instead of downloading from releases.hashicorp.com, will
+      download from a Github release for the specified user
+
+  gpg_key_id:
+    type: string
+    default: "72D7468F"
+    description: The fingerprint of the GPG key used to sign the release.
+
+  gpg_keyserver:
+    type: string
+    default: "keyserver.ubuntu.com"
+    description: "The keyserver to retrieve the GPG key from"
+
+  path:
+    type: "string"
+    description: "Path to the packer module"
+    default: "."
+
+  out_path:
+    type: string
+    default: "/tmp/teak-orb-packer"
+    description: "Path log will be stored in"
+
+  out_log:
+    type: string
+    default: "teak-orb-packer.build.log"
+    description: "Name of the file the build log should be stored in."
+
+  only:
+    type: string
+    description: "Specific list of builders to run"
+    default: ""
+
+  except:
+    type: string
+    description: "List of builders to omit"
+    default: ""
+
+  artifact_path:
+    type: string
+    description: "If set, will upload all files at the path as job artifacts"
+    default: ""
+
+  var:
+    default: ''
+    description: "Comma separated list of vars to set, e.g. 'foo=bar,baz=boo'"
+    type: string
+
+  packer_log:
+    default: '0'
+    description: "Set to 1 to enable verbose packer logging"
+    type: string
+
+  packer_working_directory:
+    default: '.'
+    description: "The directory packer should be run in, relative to the base directory of the project."
+    type: string
+
+  before_build_steps:
+    type: steps
+    description: "Steps to after installing and initing packer, but before building the image."
+    default: []
+
+  image:
+    type: string
+    default: 'teakinc/ansible:current'
+    description: "The docker image to use when running packer."
+
+steps:
+  - checkout
+  - aws-cli/install
+  - aws-oidc-assume
+  - packer-install:
+      version: << parameters.version >>
+      platform: << parameters.platform >>
+      github_releases_user: << parameters.github_releases_user >>
+      gpg_key_id: << parameters.gpg_key_id >>
+      gpg_keyserver: << parameters.gpg_keyserver >>
+  - packer-init:
+      packer_working_directory: << parameters.packer_working_directory >>
+      path: << parameters.path >>
+  - when:
+      condition: << parameters.before_build_steps >>
+      steps: << parameters.before_build_steps >>
+  - packer-build:
+      packer_working_directory: << parameters.packer_working_directory >>
+      out_log: << parameters.out_log >>
+      out_path: << parameters.out_path >>
+      path: << parameters.path >>
+      only: << parameters.only >>
+      except: << parameters.except >>
+      artifact_path: << parameters.artifact_path >>
+      var: << parameters.var >>
+      packer_log: << parameters.packer_log >>
