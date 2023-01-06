@@ -75,7 +75,7 @@ parameters:
       A list of contexts (comma or newline separated) that should be attached to jobs.
   out_path:
     type: string
-    default: ".circleci/contiue.yml"
+    default: ".circleci/continue.yml"
     description: The path the continuation pipeline should be written to
   orb:
     type: string
