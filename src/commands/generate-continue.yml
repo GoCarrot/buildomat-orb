@@ -1,0 +1,104 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: >
+  Generates a continue.yml for the omat way.
+
+parameters:
+  auto_deploy_no_rollback_services:
+    type: string
+    default: ""
+    description: >
+      A list of services (comma or newline separated) that should automatically deploy without approval
+      and not prompt for any possible rollback.
+  auto_deploy_services:
+    type: string
+    default: ""
+    description: >
+      A list of services (comma or newline separated) that should automatically deploy, but also prompt
+      to rollback if needed.
+  approve_deploy_services:
+    type: string
+    default: ""
+    description: >
+      A list of services (comma or newline separated) that require human approval before deploy begins.
+  packer_version:
+    type: string
+    default: "1.8.5"
+  packer_except:
+    type: string
+    default: ""
+  packer_only:
+    type: string
+    default: ""
+  packer_log:
+    default: '0'
+    type: string
+  packer_path:
+    type: string
+    default: '.'
+  terraform_version:
+    type: string
+    default: "1.8.5"
+  platform:
+    type: string
+    default: "linux_amd64"
+  packer_github_releases_user:
+    type: string
+    default: ""
+    description: >
+      If set, instead of downloading from releases.hashicorp.com, will
+      download from a Github release for the specified user
+  packer_gpg_key_id:
+    type: string
+    default: "72D7468F"
+    description: The fingerprint of the GPG key used to sign the release.
+  packer_gpg_keyserver:
+    type: string
+    default: "keyserver.ubuntu.com"
+    description: "The keyserver to retrieve the GPG key from"
+  contexts:
+    type: string
+    default: ""
+    description: <
+      A list of contexts (comma or newline separated) that should be attached to jobs.
+  out_path:
+    type: string
+    default: ".circleci/contiue.yml"
+    description: The path the continuation pipeline should be written to
+  orb:
+    type: string
+    description: "The fully qualified buildomat orb you are using, e.g. \"teak/buildomat@1\""
+
+steps:
+  - run:
+      name: "Generate continuation pipeline"
+      environment:
+        I_AUTO_DEPLOY_NO_ROLLBACK_SERVICES: << parameters.auto_deploy_no_rollback_services >>
+        I_AUTO_DEPLOY_SERVICES: << parameters.auto_deploy_services >>
+        I_APPROVE_DEPLOY_SERVICES: << parameters.approve_deploy_services >>
+        I_PACKER_VERSION: << parameters.packer_version >>
+        I_PACKER_EXCEPT: << parameters.packer_except >>
+        I_PACKER_ONLY: << parameters.packer_only >>
+        I_PACKER_LOG: << parameters.packer_log >>
+        I_PACKER_PATH: << parameters.packer_path >>
+        I_TERRAFORM_VERSION: << parameters.terraform_version >>
+        I_PLATFORM: << parameters.platform >>
+        I_PACKER_GITHUB_RELEASES_USER: << parameters.packer_github_releases_user >>
+        I_PACKER_GPG_KEY_ID: << parameters.packer_gpg_key_id >>
+        I_PACKER_GPG_KEYSERVER: << parameters.packer_gpg_keyserver >>
+        I_CONTEXTS: << parameters.contexts >>
+        I_OUT_PATH: << parameters.out_path >>
+        I_ORB: << parameters.orb >>
+      command: << include(scripts/generate_continue.sh) >>
