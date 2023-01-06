@@ -1,0 +1,63 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: >
+  Cancels a deploy using deployomat, assuming standard exported AWS SSM parameters which must be accessible
+  with the default AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
+
+docker:
+  - image: cimg/base:stable
+
+resource_class: small
+
+parameters:
+  region:
+    type: string
+    description: "The AWS region to run in, can be an env var"
+    default: "$TF_OUT_REGION"
+  service_name:
+    type: string
+    description: "The name of the service to be deployed, can be an env var."
+  account_canonical_slug:
+    type: string
+    description: "The name of the account to deploy in, can be an env var"
+    default: "$TF_OUT_ACCOUNT_CANONICAL_SLUG"
+  deployomat_canonical_slug:
+    type: string
+    description: "The accountomat canonical slug of the account containing deployomat, can be an env var"
+    default: "$TF_OUT_DEPLOYOMAT_CANONICAL_SLUG"
+  role_external_id:
+    type: string
+    description: "If present, the ExternalId to use when assuming a role in AWS."
+    default: "$ROLE_EXTERNAL_ID"
+  deployomat_service_name:
+    type: string
+    description: "The service name of the deployomat, used for looking up SFN arn parameters."
+    default: "deployomat"
+  deployer_role_param_name:
+    type: string
+    description: "The name of the role parameter to assume to invoke the SFN."
+    default: "deployer"
+
+steps:
+  - aws-cli/install
+  - aws-oidc-assume
+  - deployomat-cancel:
+      region: << parameters.region >>
+      service_name: << parameters.service_name >>
+      account_canonical_slug: << parameters.account_canonical_slug >>
+      deployomat_canonical_slug: << parameters.deployomat_canonical_slug >>
+      role_external_id: << parameters.role_external_id >>
+      deployomat_service_name: << parameters.deployomat_service_name >>
+      deployer_role_param_name: << parameters.deployer_role_param_name >>
