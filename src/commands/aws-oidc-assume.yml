@@ -1,0 +1,49 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: >
+  Assumes an AWS IAM role using CIRCLE_OIDC_TOKEN. Must have the AWS cli installed.
+
+parameters:
+  region:
+    type: string
+    description: "The AWS region to run in, can be an env var"
+    default: "$AWS_REGION"
+  role_arn:
+    type: string
+    description: "The role arn to assume, can be an env var"
+    default: "$AWS_ROLE_ARN"
+  duration_seconds:
+    type: integer
+    description: "The number of seconds to assume the role for"
+    default: 3600
+  role_external_id:
+    type: string
+    description: "If present, the ExternalId to use when assuming the role in AWS."
+    default: "$ROLE_EXTERNAL_ID"
+  force_assumption:
+    type: boolean
+    description: "If true, will force the assumption of an OIDC role even if existing AWS keys are present"
+    default: true
+
+steps:
+  - run:
+      name: "Assume Role"
+      environment:
+        I_REGION: << parameters.region >>
+        I_ROLE_ARN: << parameters.role_arn >>
+        I_DURATION_SECONDS: << parameters.duration_seconds >>
+        I_ROLE_EXTERNAL_ID: << parameters.role_external_id >>
+        I_FORCE_ASSUMPTION: << parameters.force_assumption >>
+      command: << include(scripts/aws_oidc_assume.sh) >>

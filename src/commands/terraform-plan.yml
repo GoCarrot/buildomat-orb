@@ -1,0 +1,90 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: "Run `terraform plan`."
+
+parameters:
+  out_plan:
+    type: string
+    default: "teak-orb-terraform.tfplan"
+
+  out_log:
+    type: string
+    default: "teak-orb-terraform.plan.log"
+
+  out_path:
+    type: string
+    default: "/tmp/teak-orb-terraform"
+
+  workspace:
+    type: string
+    description: Name of the terraform workspace
+    default: ""
+
+  path:
+    type: "string"
+    description: "Path to the terraform module"
+    default: "."
+
+  var:
+    default: ''
+    description: "Comma separated list of vars to set, e.g. 'foo=bar,baz=boo'"
+    type: string
+
+  continuation:
+    type: boolean
+    description: "Prepares a continue_params.json file for use with https://circleci.com/developer/orbs/orb/circleci/continuation."
+    default: false
+
+  continuation_parameters:
+    default: ''
+    description: "Comma separated list of additional parameters to set for the continued pipeline e.g. 'foo=bar,baz=boo'"
+    type: string
+
+  var_file:
+    default: ''
+    description: "Comma separated list of var_files to load to set, e.g. 'dev.tfvars'"
+    type: string
+
+steps:
+  - run:
+      name: Terraform Plan
+      environment:
+        I_OUT_PLAN: << parameters.out_plan >>
+        I_OUT_LOG: << parameters.out_log >>
+        I_OUT_PATH: << parameters.out_path >>
+        I_WORKSPACE: << parameters.workspace >>
+        I_PATH: << parameters.path >>
+        I_VAR: << parameters.var >>
+        I_VAR_FILE: << parameters.var_file >>
+      command: << include(scripts/terraform_plan.sh) >>
+  - when:
+      condition: << parameters.continuation >>
+      steps:
+        - run:
+            name: "Generate continue_params"
+            environment:
+              I_OUT_PATH: << parameters.out_path >>
+              I_WORKSPACE: << parameters.workspace >>
+              I_OUT_LOG: << parameters.out_log >>
+              I_CONTINUATION_PARAMETERS: << parameters.continuation_parameters >>
+            command: << include(scripts/terraform_plan_continuation.sh) >>
+        - save_cache:
+            key: "{{ .Environment.CIRCLE_WORKFLOW_ID }}"
+            paths:
+              - << parameters.out_path >>/<< parameters.out_plan >>
+  - store_artifacts:
+      path: << parameters.out_path >>/<< parameters.out_plan >>
+  - store_artifacts:
+      path: << parameters.out_path >>/<< parameters.out_log >>

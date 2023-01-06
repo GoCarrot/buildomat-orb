@@ -1,0 +1,42 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: "Run `terraform init`"
+
+parameters:
+  path:
+    type: "string"
+    description: "Path to the terraform module"
+    default: "."
+  cache_version:
+    type: "string"
+    description: "Change me to blow away caches"
+    default: "v2"
+
+steps:
+  - restore_cache:
+      keys:
+        - << parameters.cache_version >>-teak-orb-terraform-module-cache-{{ checksum "<< parameters.path >>/.terraform.lock.hcl" }}-
+        - << parameters.cache_version >>-teak-orb-terraform-module-cache-{{ checksum "<< parameters.path >>/.terraform.lock.hcl" }}
+  - run:
+      name: Terraform Init
+      environment:
+        I_PATH: << parameters.path >>
+      command: << include(scripts/terraform_init.sh) >>
+  - save_cache:
+      key: << parameters.cache_version >>-teak-orb-terraform-module-cache-{{ checksum "<< parameters.path >>/.terraform.lock.hcl" }}-{{checksum "/tmp/tf_init.out" }}
+      paths:
+        - << parameters.path >>/.terraform/modules
+        - << parameters.path >>/.terraform/providers
+        - << parameters.path >>/.terraform/terraform.tfstate

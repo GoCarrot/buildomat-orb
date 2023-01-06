@@ -1,0 +1,68 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: "Prepare a specified version of a hashicorp tool for use."
+
+parameters:
+  tool:
+    type: enum
+    enum: ["terraform", "packer"]
+    description: "The hashicorp tool which should be installed"
+
+  version:
+    type: string
+    description: "The version of the tool to install. May be an environment variable."
+
+  platform:
+    type: string
+    default: "linux_amd64"
+    description: "The platform the tool will be run on. May be an environment variable."
+
+  github_releases_user:
+    type: string
+    default: ""
+    description: >
+      If set, instead of downloading from releases.hashicorp.com, will
+      download from a Github release for the specified user. May be an environment variable
+
+  gpg_key_id:
+    type: string
+    default: "72D7468F"
+    description: The fingerprint of the GPG key used to sign the release. May be an environment variable
+
+  gpg_keyserver:
+    type: string
+    default: "keyserver.ubuntu.com"
+    description: "The keyserver to retrieve the GPG key from. May be an environment variable"
+
+steps:
+  - restore_cache:
+      keys:
+        - teak-orb-hashicorp-install-<< parameters.tool >>-<< parameters.version >>-<< parameters.github_releases_user >>
+        - teak-orb-hashicorp-install-<< parameters.tool >>-<< parameters.version >>
+  - run:
+      name: Install or Upgrade << parameters.tool >>
+      environment:
+        I_TOOL: << parameters.tool >>
+        I_VERSION: << parameters.version >>
+        I_PLATFORM: << parameters.platform >>
+        I_GITHUB_RELEASES_USER: << parameters.github_releases_user >>
+        I_GPG_KEY_ID: << parameters.gpg_key_id >>
+        I_GPG_KEYSERVER: << parameters.gpg_keyserver >>
+      command: << include(scripts/hashicorp_install.sh) >>
+
+  - save_cache:
+      key: teak-orb-hashicorp-install-<< parameters.tool >>-<< parameters.version >>--<< parameters.github_releases_user >>
+      paths:
+        - ~/<< parameters.tool >>

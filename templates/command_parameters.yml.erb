@@ -1,0 +1,4 @@
+environment:
+<% env_inputs.each do |input| %>
+    I_<%= input.tr('-', '_').upcase %>: << parameters.<%= input %> >>
+<% end %>

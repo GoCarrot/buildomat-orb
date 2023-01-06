@@ -1,0 +1,115 @@
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: "Run `terraform apply`."
+
+parameters:
+  path:
+    type: "string"
+    description: "Path to the terraform module"
+    default: "."
+
+  workspace:
+    type: "string"
+    description: Name of the terraform workspace
+    default: ""
+
+  plan:
+    type: string
+    default: "teak-orb-terraform.tfplan"
+    description: "The name of the planfile to apply."
+
+  plan_path:
+    type: string
+    description: "Path the planfile is stored in. Should be persisted from a terraform-plan job or command."
+    default: "/tmp/teak-orb-terraform"
+
+  out_log:
+    type: string
+    default: "teak-orb-terraform.apply.log"
+    description: "Name of the file the apply log should be stored in."
+
+  dry_run:
+    type: boolean
+    default: false
+    description: "When true will show what apply would have done, but will not run apply."
+
+  continuation_cache:
+    type: "string"
+    description: "The cache key the plan was stored in for continuations (https://circleci.com/developer/orbs/orb/circleci/continuation)"
+    default: ""
+
+  use_circle_workspace:
+    type: boolean
+    default: true
+    description: "Use plan_path as a circleci workspace."
+
+  before_apply_steps:
+    type: steps
+    description: "Steps to execute prior to running terraform apply, but after terraform init."
+    default: []
+
+steps:
+  - when:
+      condition: << parameters.continuation_cache >>
+      steps:
+        - run:
+            name: "Ensure directory structure exists"
+            command: mkdir -p /tmp/teak-orb-terraform
+        - restore_cache:
+            key: << parameters.continuation_cache >>
+  - when:
+      condition: << parameters.use_circle_workspace >>
+      steps:
+        - run:
+            name: Prepare attach_workspace
+            command: mkdir -p << parameters.path >>
+        - attach_workspace:
+            at: << parameters.plan_path >>
+  - run:
+      name: "Set terraform workspace"
+      environment:
+        I_WORKSPACE: << parameters.workspace >>
+        I_PATH: << parameters.path >>
+      command: << include(scripts/terraform_workspace.sh) >>
+  - when:
+      condition: << parameters.before_apply_steps >>
+      steps: << parameters.before_apply_steps >>
+  - unless:
+      condition: << parameters.dry_run >>
+      steps:
+        - run:
+            name: Terraform Apply
+            environment:
+              module_path: << parameters.path >>
+            command: |
+              ~/terraform/terraform -chdir="$module_path" apply -no-color << parameters.plan_path >>/<< parameters.plan >> | tee << parameters.out_log >>
+        - store_artifacts:
+            path: << parameters.out_log >>
+        - when:
+            condition: << parameters.use_circle_workspace >>
+            steps:
+              - persist_to_workspace:
+                  root: << parameters.plan_path >>
+                  paths:
+                    - "*"
+  - when:
+      condition: << parameters.dry_run >>
+      steps:
+        - run:
+            name: Terraform Apply (Dry Run)
+            command: |
+              ~/terraform/terraform show << parameters.plan_path >>/<< parameters.plan >> | tee << parameters.out_log >>
+        - store_artifacts:
+            path: << parameters.out_log >>
