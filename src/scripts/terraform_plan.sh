@@ -63,7 +63,7 @@ TFPlan() {
   # PLAN_ARGS here cannot be quoted, we are relying on the word splitting behavior
   # to properly pass in various CLI options.
   # shellcheck disable=SC2086
-  ~/terraform/terraform -chdir="${I_PATH}" plan $PLAN_ARGS -out="${I_OUT_PATH}/${I_OUT_PLAN}" | tee "${I_OUT_PATH}/${I_OUT_PLAN}"
+  ~/terraform/terraform -chdir="${I_PATH}" plan $PLAN_ARGS -out="${I_OUT_PATH}/${I_OUT_PLAN}" | tee "${I_OUT_PATH}/${I_OUT_LOG}"
   plan_retval=$?
   set -e
   if [ $plan_retval -eq 1 ]; then
