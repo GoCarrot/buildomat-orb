@@ -29,7 +29,7 @@ SetupEnv() {
 GenerateContinuation() {
   CONTINUE_PARAMS=""
   if [ -f "${I_OUT_PATH}"/tf_plan_changes ]; then
-    CONTINUE_PARAMS="{\"run-apply\":true, \"continuation-cache-id\": \"${CIRCLE_WORKFLOW_ID}\", \"workspace\":\"${I_WORKSPACE}>\", \"plan-log-url\":\"https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}${I_OUT_PATH}/${I_OUT_LOG}\"}"
+    CONTINUE_PARAMS="{\"run-apply\":true, \"continuation-cache-id\": \"${CIRCLE_WORKFLOW_ID}\", \"workspace\":\"${I_WORKSPACE}\", \"plan-log-url\":\"https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}${I_OUT_PATH}/${I_OUT_LOG}\"}"
   else
     CONTINUE_PARAMS="{}"
   fi
