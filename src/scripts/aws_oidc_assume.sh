@@ -48,7 +48,7 @@ PersistEnvVars() {
   } >> "${BASH_ENV}"
 }
 
-if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+if [ -z "$AWS_ACCESS_KEY_ID" ] || [ "${I_FORCE_ASSUMPTION}" == "1" ]; then
   SetupEnv
   AssumeRole
   PersistEnvVars
