@@ -50,7 +50,7 @@ BuildMessage() {
         }
       ]
     }" > /tmp/teak-orb/deploy-deploy-slack-template.json
-    echo "export ${I_TEMPLATE_NAME}=\$(cat /tmp/teak-orb/deploy-cancel-slack-template.json)" >> "${BASH_ENV}"
+    echo "export ${I_TEMPLATE_NAME}=\$(cat /tmp/teak-orb/deploy-deploy-slack-template.json)" >> "${BASH_ENV}"
 }
 
 SetupEnv
