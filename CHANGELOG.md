@@ -1,3 +1,9 @@
+## 0.1.4
+
+BUG FIXES:
+
+* Approval deploys might work now
+
 ## 0.1.3
 
 BUG FIXES:
