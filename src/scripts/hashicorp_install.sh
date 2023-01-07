@@ -35,7 +35,7 @@ InstallTool() {
     echo "Importing signing key"
     gpg --keyserver "${I_GPG_KEYSERVER}" --recv "${I_GPG_KEY_ID}"
 
-    base_url="https://releases.hashicorp.com/<< parameters.tool >>/<< parameters.version >>"
+    base_url="https://releases.hashicorp.com/${I_TOOL}/${I_VERSION}"
     if [ -n "${I_GITHUB_RELEASES_USER}" ] ; then
       echo "Using Github releases from ${I_GITHUB_RELEASES_USER}"
       base_url="https://github.com/${I_GITHUB_RELEASES_USER}/${I_TOOL}/releases/download/v${I_VERSION}"
