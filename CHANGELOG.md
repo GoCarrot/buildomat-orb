@@ -1,3 +1,9 @@
+## 0.1.3
+
+BUG FIXES:
+
+* hashicorp install might work now
+
 ## 0.1.2
 
 BUG FIXES:
