@@ -33,9 +33,9 @@ SetupEnv() {
 AssumeRole() {
   echo "Assuming role ${I_ROLE_ARN}"
   if [ -z "$I_ROLE_EXTERNAL_ID" ]; then
-    eval "$(aws sts assume-role-with-web-identity --role-arn "${I_ROLE_ARN}" --role-session-name "${CIRCLE_PROJECT_REPONAME}-${CIRCLE_WORKFLOW_ID}" --web-identity-token "${CIRCLE_OIDC_TOKEN}" --duration-seconds "${I_DURATION_SECONDS}" | jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)\n"')"
+    eval "$(aws sts assume-role-with-web-identity --role-arn "${I_ROLE_ARN}" --role-session-name "${CIRCLE_PROJECT_REPONAME}-${CIRCLE_WORKFLOW_ID}" --web-identity-token "${CIRCLE_OIDC_TOKEN_V2}" --duration-seconds "${I_DURATION_SECONDS}" | jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)\n"')"
   else
-    eval "$(aws sts assume-role-with-web-identity --external-id "${I_ROLE_EXTERNAL_ID}" --role-arn "${I_ROLE_ARN}" --role-session-name "${CIRCLE_PROJECT_REPONAME}-${CIRCLE_WORKFLOW_ID}" --web-identity-token "${CIRCLE_OIDC_TOKEN}" --duration-seconds "${I_DURATION_SECONDS}" | jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)\n"')"
+    eval "$(aws sts assume-role-with-web-identity --external-id "${I_ROLE_EXTERNAL_ID}" --role-arn "${I_ROLE_ARN}" --role-session-name "${CIRCLE_PROJECT_REPONAME}-${CIRCLE_WORKFLOW_ID}" --web-identity-token "${CIRCLE_OIDC_TOKEN_V2}" --duration-seconds "${I_DURATION_SECONDS}" | jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)\n"')"
   fi
 }
 
