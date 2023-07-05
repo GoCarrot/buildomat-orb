@@ -1,3 +1,9 @@
+## 0.1.5
+
+ENHANCEMENTS:
+
+* Use CIRCLE_OIDC_TOKEN_V2 when assuming an AWS role.
+
 ## 0.1.4
 
 BUG FIXES:
