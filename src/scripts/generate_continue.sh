@@ -203,7 +203,8 @@ workflows:
           type: approval
           name: "Run Deploy (<< matrix.service_name >>)?"
           requires:
-            - "Deploy Hold Notify (<< matrix.service_name >>)?"
+            - "Apply (<< pipeline.parameters.workspace >>)"
+            - "Generate Images (<< pipeline.parameters.build_account_slug >>)"
       - buildomat/deployomat-deploy: &approve_deploy
           <<: *CONTEXTS
           name: "Deploy << matrix.service_name >>"
@@ -260,7 +261,7 @@ workflows:
           type: approval
           name: "Cancel Deploy (<< matrix.service_name >>)?"
           requires:
-            - "Deploy Cancel Notify (<< matrix.service_name >>)"
+            - "Run Deploy (<< matrix.service_name >>)?"
       - hold: &approve_auto_cancel_hold
           matrix:
             <<: *auto_deploy_rollback_services
