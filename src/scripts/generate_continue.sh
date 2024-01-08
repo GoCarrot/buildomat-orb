@@ -301,7 +301,10 @@ workflows:
           <<: *approve_deploy_notify
           requires:
             - "Generate Images (<< pipeline.parameters.build_account_slug >>)"
-      - hold: *approve_deploy_hold
+      - hold:
+          <<: *approve_deploy_hold
+          requires:
+            - "Generate Images (<< pipeline.parameters.build_account_slug >>)"
       - buildomat/deployomat-deploy:
           <<: *approve_deploy
       - buildomat/deployomat-deploy:
