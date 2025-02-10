@@ -26,7 +26,7 @@ parameters:
   version:
     description: "Version of packer to use"
     type: string
-    default: "1.8.5"
+    default: "1.12.0"
 
   platform:
     description: "Platform packer will run on"
