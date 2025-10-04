@@ -137,6 +137,9 @@ parameters:
   run-apply:
     type: boolean
     default: false
+  environment-active:
+    type: boolean
+    default: true
   continuation-cache-id:
     type: string
     default: ""
@@ -168,7 +171,10 @@ parameters:
 workflows:
   version: 2
   apply-and-build:
-    when: << pipeline.parameters.run-apply >>
+    when:
+      and:
+        - << pipeline.parameters.run-apply >>
+        - << pipeline.parameters.environment-active >>
     jobs:
       - buildomat/terraform-slack-on-hold:
           <<: *CONTEXTS
@@ -293,6 +299,7 @@ workflows:
     when:
       and:
         - not: << pipeline.parameters.run-apply >>
+        - << pipeline.parameters.environment-active >>
         - << pipeline.parameters.deploy_account_slug >>
     jobs:
       - buildomat/packer-build:
@@ -323,9 +330,11 @@ workflows:
       - buildomat/deployomat-cancel: *approve_auto_cancel
   build-only:
     when:
-      and:
-        - not: << pipeline.parameters.run-apply >>
-        - not: << pipeline.parameters.deploy_account_slug >>
+      or:
+        - not: << pipeline.parameters.environment-active >>
+        - and:
+            - not: << pipeline.parameters.run-apply >>
+            - not: << pipeline.parameters.deploy_account_slug >>
     jobs:
       - buildomat/packer-build:
           <<: *packer-build
