@@ -7,6 +7,12 @@ BUG FIXES:
   materializing an `environment:` block — so `lock: false` never actually
   reached `terraform plan` as `-lock=false`. Now matches both renderings.
 
+ENHANCEMENTS:
+
+* `terraform-plan`: logs the fully-built `terraform plan` argument string
+  before running it, so a param like `lock` can be confirmed reaching the
+  actual invocation rather than inferred from the env-var echo alone.
+
 ## 0.1.9
 
 ENHANCEMENTS:
