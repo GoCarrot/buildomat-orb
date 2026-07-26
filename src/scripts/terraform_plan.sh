@@ -60,7 +60,7 @@ TFPlan() {
     done
   fi
 
-  if [[ "${I_LOCK}" == "false" ]]; then
+  if [[ "${I_LOCK}" == "false" || "${I_LOCK}" == "0" ]]; then
     PLAN_ARGS="$PLAN_ARGS -lock=false"
   fi
 

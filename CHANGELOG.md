@@ -1,3 +1,12 @@
+## 0.1.10
+
+BUG FIXES:
+
+* `terraform-plan`: the `lock` param's string comparison only matched the
+  literal word `false`, but CircleCI stringifies a boolean `false` to `0` when
+  materializing an `environment:` block — so `lock: false` never actually
+  reached `terraform plan` as `-lock=false`. Now matches both renderings.
+
 ## 0.1.9
 
 ENHANCEMENTS:
