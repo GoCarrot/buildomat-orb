@@ -96,6 +96,14 @@ parameters:
     description: "Comma separated list of var_files to load to set, e.g. 'dev.tfvars'"
     type: string
 
+  lock:
+    type: boolean
+    description: >
+      Whether to take the state lock while planning. Defaults to true (existing
+      behavior); set to false only for a plan whose output is discarded and
+      never applied.
+    default: true
+
 steps:
   - checkout
   - aws-cli/install
@@ -119,6 +127,7 @@ steps:
       var_file: << parameters.var_file >>
       continuation: << parameters.continuation >>
       continuation_parameters: << parameters.continuation_parameters >>
+      lock: << parameters.lock >>
   - persist_to_workspace:
       root: << parameters.out_path >>
       paths:

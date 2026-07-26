@@ -22,6 +22,7 @@ SetupEnv() {
   I_PATH=$(eval echo "${I_PATH}")
   I_VAR=$(eval echo "${I_VAR}")
   I_VAR_FILE=$(eval echo "${I_VAR_FILE}")
+  I_LOCK=$(eval echo "${I_LOCK}")
 
   echo "I_OUT_PLAN"="${I_OUT_PLAN}"
   echo "I_OUT_LOG"="${I_OUT_LOG}"
@@ -30,6 +31,7 @@ SetupEnv() {
   echo "I_PATH"="${I_PATH}"
   echo "I_VAR"="${I_VAR}"
   echo "I_VAR_FILE"="${I_VAR_FILE}"
+  echo "I_LOCK"="${I_LOCK}"
 }
 
 TFPlan() {
@@ -56,6 +58,10 @@ TFPlan() {
     for var in $(echo "${I_VAR_FILE}" | tr ',' '\n'); do
       PLAN_ARGS="$PLAN_ARGS -var-file $var"
     done
+  fi
+
+  if [[ "${I_LOCK}" == "false" ]]; then
+    PLAN_ARGS="$PLAN_ARGS -lock=false"
   fi
 
   mkdir -p "${I_OUT_PATH}"
