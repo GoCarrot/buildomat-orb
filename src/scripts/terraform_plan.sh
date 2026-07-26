@@ -65,6 +65,11 @@ TFPlan() {
     PLAN_ARGS="$PLAN_ARGS -lock=false"
   fi
 
+  # PLAN_ARGS is built only from flags and I_VAR/I_VAR_FILE values already
+  # echoed above, so this carries nothing through CircleCI's masking that
+  # isn't already in the log.
+  echo "[INFO] terraform plan args: ${PLAN_ARGS}"
+
   mkdir -p "${I_OUT_PATH}"
   set +e
   # PLAN_ARGS here cannot be quoted, we are relying on the word splitting behavior
