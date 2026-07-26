@@ -60,14 +60,24 @@ parameters:
   lock:
     type: boolean
     description: >
-      Whether to take the state lock while planning. Defaults to true (existing
-      behavior). Set to false only when the plan's output is discarded and
-      nothing will write state from it — e.g. an advisory plan on a branch that
-      never continues into an apply — since skipping the lock risks reading
-      state mid-write otherwise.
+      Whether to take the state lock while planning. Set to false only when
+      the plan's output is discarded and nothing will write state from it —
+      e.g. an advisory plan on a branch that never continues into an apply —
+      since skipping the lock risks reading state mid-write otherwise.
     default: true
 
 steps:
+  - when:
+      condition:
+        and:
+          - not: << parameters.lock >>
+          - << parameters.continuation >>
+      steps:
+        - run:
+            name: "Validate lock/continuation combination"
+            command: |
+              echo "lock: false is incompatible with continuation: true — an unlocked plan must never feed an apply." >&2
+              exit 1
   - run:
       name: Terraform Plan
       environment:
