@@ -31,12 +31,9 @@ SetupEnv() {
   echo "I_PATH"="${I_PATH}"
   echo "I_VAR"="${I_VAR}"
   echo "I_VAR_FILE"="${I_VAR_FILE}"
-  # This echo is load-bearing, not just consistency with the params above it:
-  # it's the only thing that caught I_LOCK arriving as "0" instead of "false"
-  # (CircleCI stringifies boolean params when materializing `environment:`).
-  # Every other check available - orb validate, shellcheck, config process,
-  # config validate, a green job - passed on that broken behavior. Don't
-  # remove it as noise.
+  # Load-bearing: the only artifact showing how I_LOCK actually arrives at the
+  # shell. CircleCI stringifies boolean params, so `false` becomes "0" - every
+  # compile-time check passes either way. Don't remove as noise.
   echo "I_LOCK"="${I_LOCK}"
 }
 
