@@ -1,3 +1,11 @@
+## 0.1.9
+
+ENHANCEMENTS:
+
+* `terraform-plan` command/job: new opt-in `lock` parameter (default `true`,
+  matching existing behavior). Set to `false` for a plan whose output is
+  discarded and never applied, to skip taking the state lock.
+
 ## 0.1.5
 
 ENHANCEMENTS:

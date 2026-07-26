@@ -96,6 +96,15 @@ parameters:
     description: "Comma separated list of var_files to load to set, e.g. 'dev.tfvars'"
     type: string
 
+  lock:
+    type: boolean
+    description: >
+      Whether to take the state lock while planning. Set to false only when
+      the plan's output is discarded and nothing will write state from it —
+      e.g. an advisory plan on a branch that never continues into an apply —
+      since skipping the lock risks reading state mid-write otherwise.
+    default: true
+
 steps:
   - checkout
   - aws-cli/install
@@ -119,6 +128,7 @@ steps:
       var_file: << parameters.var_file >>
       continuation: << parameters.continuation >>
       continuation_parameters: << parameters.continuation_parameters >>
+      lock: << parameters.lock >>
   - persist_to_workspace:
       root: << parameters.out_path >>
       paths:
