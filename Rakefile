@@ -47,14 +47,13 @@ def fail_loudly(message)
 end
 
 # Pre-check: catches "forgot the entry" / "entry is stale" before anything
-# ships. Only an ordering test against the currently-published version -- no
-# bump arithmetic, so it can't disagree with what circleci computes.
+# ships.
 def ensure_changelog_has_a_pending_entry!
   published = registry_version
   return if ChangelogGate.documents_newer_than?(changelog_text, published)
 
   fail_loudly(<<~MSG)
-    CHANGELOG.md's top entry (##{ChangelogGate.top_version(changelog_text)}) is not newer than
+    CHANGELOG.md's top entry (###{ChangelogGate.top_version(changelog_text)}) is not newer than
     #{ORGANIZATION}/#{ORB_NAME}@#{published}, which is already published.
     Add a CHANGELOG.md entry for the version you're about to promote before running rake promote:*.
   MSG
@@ -62,21 +61,19 @@ end
 
 # Post-check: `circleci orb publish promote` is irreversible, so this can
 # only catch drift after the fact -- but it catches the exact-version
-# mismatch (e.g. CHANGELOG titled 0.2.0, actually published 0.1.11) without
-# duplicating circleci's semver bump logic, since circleci already told us
-# the answer.
+# mismatch (e.g. CHANGELOG titled 0.2.0, actually published 0.1.11).
 def ensure_changelog_matches_published_version!(promote_output)
   published = ChangelogGate.parse_promoted_version(promote_output, ORGANIZATION, ORB_NAME)
   return if ChangelogGate.documents_version?(changelog_text, published)
 
   fail_loudly(<<~MSG)
     #{ORGANIZATION}/#{ORB_NAME}@#{published} is now published, but CHANGELOG.md's top entry is
-    ##{ChangelogGate.top_version(changelog_text)}, not ##{published}.
+    ###{ChangelogGate.top_version(changelog_text)}, not ##{published}.
     Fix CHANGELOG.md's top entry to ##{published} now -- the version is already live and this can't be undone.
   MSG
 end
 
-def promote(label:, version:, verbose: false)
+def promote(label:, version:)
   ensure_changelog_has_a_pending_entry!
 
   output, status = Open3.capture2e("circleci orb publish promote #{ORGANIZATION}/#{ORB_NAME}@#{label} #{version}")

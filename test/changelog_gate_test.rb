@@ -1,5 +1,19 @@
 # frozen_string_literal: true
 
+# Copyright 2023 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 require 'minitest/autorun'
 require_relative '../lib/changelog_gate'
 
@@ -21,8 +35,6 @@ class ChangelogGateTest < Minitest::Test
     refute ChangelogGate.documents_version?(text, '0.1.10')
   end
 
-  # This is the C-1275 failure mode: a CHANGELOG entry titled for a version
-  # that was never the one actually published.
   def test_documents_version_rejects_a_newer_but_wrong_title
     text = "## 0.2.0\n"
     refute ChangelogGate.documents_version?(text, '0.1.11')
@@ -50,6 +62,19 @@ class ChangelogGateTest < Minitest::Test
   def test_parse_promoted_version_raises_on_unrecognized_output
     assert_raises(ChangelogGate::UnrecognizedPromoteOutput) do
       ChangelogGate.parse_promoted_version("something unexpected happened\n", 'teak', 'buildomat')
+    end
+  end
+
+  def test_parse_promoted_version_raises_when_the_promoted_orb_is_a_different_one
+    output = "Orb `teak/other-orb@dev:alpha` was promoted to `teak/other-orb@1.0.0`.\n"
+    assert_raises(ChangelogGate::UnrecognizedPromoteOutput) do
+      ChangelogGate.parse_promoted_version(output, 'teak', 'buildomat')
+    end
+  end
+
+  def test_documents_newer_than_raises_on_a_non_semver_header
+    assert_raises(ChangelogGate::MissingVersionHeader) do
+      ChangelogGate.documents_newer_than?("## Unreleased\n", '0.1.10')
     end
   end
 end

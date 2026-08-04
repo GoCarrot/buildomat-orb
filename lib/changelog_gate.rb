@@ -33,6 +33,8 @@ module ChangelogGate
   # True when the CHANGELOG's top entry is a newer semver than `floor_version`.
   def self.documents_newer_than?(changelog_text, floor_version)
     Gem::Version.new(top_version(changelog_text)) > Gem::Version.new(floor_version)
+  rescue ArgumentError
+    raise MissingVersionHeader, "CHANGELOG's top entry (##{top_version(changelog_text)}) is not a valid version"
   end
 
   class UnrecognizedPromoteOutput < StandardError; end
@@ -41,7 +43,8 @@ module ChangelogGate
   # stdout, e.g. "Orb `teak/buildomat@dev:alpha` was promoted to
   # `teak/buildomat@0.1.11`." Raises rather than returning nil on a format
   # we don't recognize, so an unparseable output fails the gate instead of
-  # silently skipping it.
+  # silently skipping it. Format string pinned against circleci CLI
+  # 0.1.33494+7cc6570 -- re-derive if it stops matching.
   def self.parse_promoted_version(promote_output, organization, orb_name)
     match = promote_output.match(/was promoted to `#{Regexp.escape("#{organization}/#{orb_name}")}@(\S+?)`/)
     raise UnrecognizedPromoteOutput, "could not find a promoted version in:\n#{promote_output}" unless match
