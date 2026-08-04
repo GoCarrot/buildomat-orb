@@ -97,7 +97,7 @@ end
 
 desc 'Run the Ruby unit tests'
 task :spec do
-  sh 'ruby -Ilib -Itest test/changelog_gate_test.rb', verbose: false
+  sh 'rspec', verbose: false
 end
 
 desc 'Validate the orb, run shellcheck on all scripts, and run the Ruby unit tests'
