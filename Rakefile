@@ -15,6 +15,8 @@
 # limitations under the License.
 
 require 'tempfile'
+require 'open3'
+require_relative 'lib/changelog_gate'
 
 ORGANIZATION = 'teak'
 ORB_NAME = 'buildomat'
@@ -27,8 +29,58 @@ def with_packed_orb
   end
 end
 
-def promote(label:, version:, verbose: false)
-  sh "circleci orb publish promote #{ORGANIZATION}/#{ORB_NAME}@#{label} #{version}", verbose: verbose
+def registry_version
+  info = `circleci orb info #{ORGANIZATION}/#{ORB_NAME}`
+  match = info.match(/^Latest: #{ORGANIZATION}\/#{ORB_NAME}@(\S+)/)
+  raise "Could not determine the published version of #{ORGANIZATION}/#{ORB_NAME} from `circleci orb info`" unless match
+
+  match[1]
+end
+
+def changelog_text
+  File.read('CHANGELOG.md')
+end
+
+def fail_loudly(message)
+  $stderr.puts message
+  exit 1
+end
+
+# Pre-check: catches "forgot the entry" / "entry is stale" before anything
+# ships.
+def ensure_changelog_has_a_pending_entry!
+  published = registry_version
+  return if ChangelogGate.documents_newer_than?(changelog_text, published)
+
+  fail_loudly(<<~MSG)
+    CHANGELOG.md's top entry (###{ChangelogGate.top_version(changelog_text)}) is not newer than
+    #{ORGANIZATION}/#{ORB_NAME}@#{published}, which is already published.
+    Add a CHANGELOG.md entry for the version you're about to promote before running rake promote:*.
+  MSG
+end
+
+# Post-check: `circleci orb publish promote` is irreversible, so this can
+# only catch drift after the fact -- but it catches the exact-version
+# mismatch (e.g. CHANGELOG titled 0.2.0, actually published 0.1.11).
+def ensure_changelog_matches_published_version!(promote_output)
+  published = ChangelogGate.parse_promoted_version(promote_output, ORGANIZATION, ORB_NAME)
+  return if ChangelogGate.documents_version?(changelog_text, published)
+
+  fail_loudly(<<~MSG)
+    #{ORGANIZATION}/#{ORB_NAME}@#{published} is now published, but CHANGELOG.md's top entry is
+    ###{ChangelogGate.top_version(changelog_text)}, not ###{published}.
+    Fix CHANGELOG.md's top entry to ###{published} now -- the version is already live and this can't be undone.
+  MSG
+end
+
+def promote(label:, version:)
+  ensure_changelog_has_a_pending_entry!
+
+  output, status = Open3.capture2e("circleci orb publish promote #{ORGANIZATION}/#{ORB_NAME}@#{label} #{version}")
+  puts output
+  raise "circleci orb publish promote failed:\n#{output}" unless status.success?
+
+  ensure_changelog_matches_published_version!(output)
 end
 
 desc 'Validate the orb'
@@ -43,8 +95,13 @@ task :shellcheck do
   sh 'shellcheck src/scripts/*'
 end
 
-desc 'Validate the orb and run shellcheck on all scripts'
-task :test => [:validate, :shellcheck]
+desc 'Run the Ruby unit tests'
+task :spec do
+  sh 'rspec', verbose: false
+end
+
+desc 'Validate the orb, run shellcheck on all scripts, and run the Ruby unit tests'
+task :test => [:validate, :shellcheck, :spec]
 
 desc 'Publish the orb to the dev:alpha tag'
 task :publish do
