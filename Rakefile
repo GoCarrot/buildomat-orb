@@ -27,7 +27,36 @@ def with_packed_orb
   end
 end
 
+def registry_version
+  info = `circleci orb info #{ORGANIZATION}/#{ORB_NAME}`
+  match = info.match(/^Latest: #{ORGANIZATION}\/#{ORB_NAME}@(\S+)/)
+  raise "Could not determine the published version of #{ORGANIZATION}/#{ORB_NAME} from `circleci orb info`" unless match
+
+  match[1]
+end
+
+def changelog_top_version
+  line = File.readlines('CHANGELOG.md').find { |l| l.start_with?('## ') }
+  raise 'CHANGELOG.md has no version headers' unless line
+
+  line.delete_prefix('## ').strip
+end
+
+def ensure_changelog_covers_promotion!
+  published = registry_version
+  documented = changelog_top_version
+
+  return if Gem::Version.new(documented) > Gem::Version.new(published)
+
+  $stderr.puts <<~MSG
+    CHANGELOG.md's top entry is ##{documented}, but #{ORGANIZATION}/#{ORB_NAME}@#{published} is already published.
+    Add a CHANGELOG.md entry for the version this promote will create before running rake promote:* -- a promote without one leaves the registry undocumented.
+  MSG
+  exit 1
+end
+
 def promote(label:, version:, verbose: false)
+  ensure_changelog_covers_promotion!
   sh "circleci orb publish promote #{ORGANIZATION}/#{ORB_NAME}@#{label} #{version}", verbose: verbose
 end
 
