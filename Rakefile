@@ -68,8 +68,8 @@ def ensure_changelog_matches_published_version!(promote_output)
 
   fail_loudly(<<~MSG)
     #{ORGANIZATION}/#{ORB_NAME}@#{published} is now published, but CHANGELOG.md's top entry is
-    ###{ChangelogGate.top_version(changelog_text)}, not ##{published}.
-    Fix CHANGELOG.md's top entry to ##{published} now -- the version is already live and this can't be undone.
+    ###{ChangelogGate.top_version(changelog_text)}, not ###{published}.
+    Fix CHANGELOG.md's top entry to ###{published} now -- the version is already live and this can't be undone.
   MSG
 end
 
