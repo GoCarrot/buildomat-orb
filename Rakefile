@@ -92,7 +92,7 @@ end
 
 desc 'Run shellcheck on all scripts'
 task :shellcheck do
-  sh 'shellcheck src/scripts/*'
+  sh 'shellcheck src/scripts/* script/*'
 end
 
 desc 'Run the Ruby unit tests'
