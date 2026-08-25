@@ -21,7 +21,7 @@ require 'timeout'
 # them in a real bash subprocess -- never by re-implementing their logic in
 # Ruby. A hand-transcribed "replica" of a script can only tell you the
 # replica is right; a faithful transcription and a subtly wrong one look
-# identical from outside (see PR #5's review of the 0.1.10 fix).
+# identical from outside.
 module ScriptHarness
   SCRIPTS_DIR = File.expand_path('../src/scripts', __dir__)
 
@@ -37,18 +37,23 @@ module ScriptHarness
   # `bash_code` -- which may call the functions/variables the script just
   # defined -- in that same bash process. `env` supplies the I_* variables a
   # CircleCI `environment:` block would set before the real script runs.
-  def self.source(script, bash_code, env: {}, timeout: DEFAULT_TIMEOUT)
+  # `chdir`, if given, runs the whole thing with that directory as cwd -- lets
+  # a caller assert nothing was left behind by a top-level side effect that
+  # doesn't print anything.
+  def self.source(script, bash_code, env: {}, timeout: DEFAULT_TIMEOUT, chdir: nil)
     script_path = File.join(SCRIPTS_DIR, script)
     raise ArgumentError, "No such script: #{script_path}" unless File.file?(script_path)
 
     full_command = "source #{script_path.shellescape}\n#{bash_code}"
-    run(['bash', '-e', '-o', 'pipefail', '-c', full_command], env: env, timeout: timeout)
+    run(['bash', '-e', '-o', 'pipefail', '-c', full_command], env: env, timeout: timeout, chdir: chdir)
   end
 
-  def self.run(cmd, env:, timeout:)
+  def self.run(cmd, env:, timeout:, chdir: nil)
     stdout_r, stdout_w = IO.pipe
     stderr_r, stderr_w = IO.pipe
-    pid = Process.spawn(env, *cmd, out: stdout_w, err: stderr_w, pgroup: true)
+    spawn_opts = { out: stdout_w, err: stderr_w, pgroup: true }
+    spawn_opts[:chdir] = chdir if chdir
+    pid = Process.spawn(env, *cmd, **spawn_opts)
     stdout_w.close
     stderr_w.close
 

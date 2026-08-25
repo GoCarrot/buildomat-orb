@@ -15,6 +15,7 @@
 # limitations under the License.
 
 require_relative '../lib/script_harness'
+require 'tmpdir'
 
 # Every script in src/scripts/ ends with a bare top-level invocation
 # (SetupEnv, then whatever does the real work) so that CircleCI's
@@ -30,13 +31,18 @@ RSpec.describe 'src/scripts/*.sh source guards' do
   end
 
   scripts.each do |script|
-    it "#{script}: sourcing defines SetupEnv but runs nothing" do
-      result = ScriptHarness.source(script, 'echo "SETUPENV_DEFINED=$(type -t SetupEnv)"')
+    it "#{script}: sourcing defines SetupEnv, runs nothing, leaves nothing behind" do
+      Dir.mktmpdir('c-1292-source-guard') do |cwd|
+        result = ScriptHarness.source(script, 'echo "SETUPENV_DEFINED=$(type -t SetupEnv)"', chdir: cwd)
 
-      expect(result.status).to be_success, "sourcing failed (stderr: #{result.stderr})"
-      expect(result.stdout.lines.map(&:chomp)).to eq(['SETUPENV_DEFINED=function']),
-        "sourcing #{script} produced unexpected output -- top-level code likely ran:\n" \
-        "stdout: #{result.stdout.inspect}\nstderr: #{result.stderr.inspect}"
+        expect(result.status).to be_success, "sourcing failed (stderr: #{result.stderr})"
+        expect(result.stderr).to eq(''), "sourcing #{script} wrote to stderr: #{result.stderr.inspect}"
+        expect(result.stdout.lines.map(&:chomp)).to eq(['SETUPENV_DEFINED=function']),
+          "sourcing #{script} produced unexpected stdout -- top-level code likely ran:\n" \
+          "stdout: #{result.stdout.inspect}"
+        expect(Dir.empty?(cwd)).to be(true),
+          "sourcing #{script} left files in its cwd -- top-level code likely ran: #{Dir.children(cwd).inspect}"
+      end
     end
   end
 end
