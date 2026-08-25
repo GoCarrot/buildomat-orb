@@ -17,8 +17,6 @@
 require 'shellwords'
 require 'timeout'
 
-# Sources a script from src/scripts/ in a real bash subprocess and runs
-# behavior against it, rather than reimplementing the script in Ruby.
 module ScriptHarness
   SCRIPTS_DIR = File.expand_path('../src/scripts', __dir__)
   DEFAULT_TIMEOUT = 5
@@ -27,7 +25,6 @@ module ScriptHarness
 
   class TimeoutError < StandardError; end
 
-  # `chdir`, if given, runs with that directory as cwd.
   def self.source(script, bash_code, env: {}, timeout: DEFAULT_TIMEOUT, chdir: nil)
     script_path = File.join(SCRIPTS_DIR, script)
     raise ArgumentError, "No such script: #{script_path}" unless File.file?(script_path)
