@@ -93,6 +93,8 @@ GenerateContinuation() {
   echo "$CONTINUE_PARAMS" > "${I_OUT_PATH}"/continue_params.json
 }
 
-SetupEnv
-CheckEnvironmentActive
-GenerateContinuation
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  CheckEnvironmentActive
+  GenerateContinuation
+fi

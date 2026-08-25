@@ -48,10 +48,12 @@ PersistEnvVars() {
   } >> "${BASH_ENV}"
 }
 
-if [ -z "$AWS_ACCESS_KEY_ID" ] || [ "${I_FORCE_ASSUMPTION}" == "1" ]; then
-  SetupEnv
-  AssumeRole
-  PersistEnvVars
-else
-  echo "AWS_ACCESS_KEY_ID is set. Not assuming OIDC role."
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if [ -z "$AWS_ACCESS_KEY_ID" ] || [ "${I_FORCE_ASSUMPTION}" == "1" ]; then
+    SetupEnv
+    AssumeRole
+    PersistEnvVars
+  else
+    echo "AWS_ACCESS_KEY_ID is set. Not assuming OIDC role."
+  fi
 fi

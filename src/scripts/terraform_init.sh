@@ -29,5 +29,7 @@ TFInit() {
   ~/terraform/terraform -chdir="${I_PATH}" init -no-color | tee /tmp/tf_init.out
 }
 
-SetupEnv
-TFInit
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  TFInit
+fi

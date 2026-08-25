@@ -29,5 +29,7 @@ PackerInit() {
   ~/packer/packer init "${I_PATH}"
 }
 
-SetupEnv
-PackerInit
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  PackerInit
+fi

@@ -31,5 +31,7 @@ SetupWorkspace() {
   fi
 }
 
-SetupEnv
-SetupWorkspace
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  SetupWorkspace
+fi
