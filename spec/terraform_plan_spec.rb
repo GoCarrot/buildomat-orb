@@ -18,17 +18,9 @@ require_relative '../lib/script_harness'
 require 'tmpdir'
 require 'fileutils'
 
-# Source the real terraform-plan arg assembly, feed it every I_LOCK
-# rendering CircleCI can produce, and assert on terraform's
-# actual argv -- not on PLAN_ARGS in isolation. `~/terraform/terraform` is a
-# hardcoded path in the script, so this stubs terraform by pointing HOME at
-# a fixture directory rather than touching the shipped script -- TFPlan runs
-# completely unmodified, real assembly and all, and the assertion covers the
-# unquoted `$PLAN_ARGS` word-splitting at the call site along with the
-# conditional that builds it.
 RSpec.describe 'terraform_plan.sh (behavioral)' do
   around do |example|
-    Dir.mktmpdir('c-1292-terraform-plan') do |fixture_root|
+    Dir.mktmpdir('terraform-plan-fixture') do |fixture_root|
       @fixture_root = fixture_root
 
       terraform_dir = File.join(fixture_root, 'terraform')
@@ -69,9 +61,7 @@ RSpec.describe 'terraform_plan.sh (behavioral)' do
     result.stdout[/^FAKE_TERRAFORM_ARGS:(.*)$/, 1] || raise("terraform stub was never invoked:\n#{result.stdout}")
   end
 
-  # I_LOCK => whether terraform's argv should contain -lock=false.
-  # CircleCI stringifies a boolean `false` param to "0", not "false" --
-  # both must unlock; everything else must leave the state lock in place.
+  # CircleCI stringifies a boolean `false` param to "0", not "false".
   {
     '0' => true,
     'false' => true,

@@ -17,29 +17,17 @@
 require 'shellwords'
 require 'timeout'
 
-# Runs behavioral tests against the actual files in src/scripts/ by sourcing
-# them in a real bash subprocess -- never by re-implementing their logic in
-# Ruby. A hand-transcribed "replica" of a script can only tell you the
-# replica is right; a faithful transcription and a subtly wrong one look
-# identical from outside.
+# Sources a script from src/scripts/ in a real bash subprocess and runs
+# behavior against it, rather than reimplementing the script in Ruby.
 module ScriptHarness
   SCRIPTS_DIR = File.expand_path('../src/scripts', __dir__)
-
-  # These scripts should never need real I/O just to be sourced -- if one
-  # hangs, its source guard is almost certainly missing or broken.
   DEFAULT_TIMEOUT = 5
 
   Result = Struct.new(:stdout, :stderr, :status)
 
   class TimeoutError < StandardError; end
 
-  # Sources `script` (a basename under src/scripts/) and then runs
-  # `bash_code` -- which may call the functions/variables the script just
-  # defined -- in that same bash process. `env` supplies the I_* variables a
-  # CircleCI `environment:` block would set before the real script runs.
-  # `chdir`, if given, runs the whole thing with that directory as cwd -- lets
-  # a caller assert nothing was left behind by a top-level side effect that
-  # doesn't print anything.
+  # `chdir`, if given, runs with that directory as cwd.
   def self.source(script, bash_code, env: {}, timeout: DEFAULT_TIMEOUT, chdir: nil)
     script_path = File.join(SCRIPTS_DIR, script)
     raise ArgumentError, "No such script: #{script_path}" unless File.file?(script_path)
@@ -72,7 +60,6 @@ module ScriptHarness
       Process.kill('KILL', -pid)
       Process.wait(pid)
     rescue Errno::ESRCH, Errno::ECHILD
-      # already gone
     end
     raise TimeoutError, "script hung past #{timeout}s -- did it lose its source guard?"
   end

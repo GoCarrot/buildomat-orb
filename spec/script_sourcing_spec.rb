@@ -17,12 +17,6 @@
 require_relative '../lib/script_harness'
 require 'tmpdir'
 
-# Every script in src/scripts/ ends with a bare top-level invocation
-# (SetupEnv, then whatever does the real work) so that CircleCI's
-# `<< include(...) >>` mechanism can drop the whole file into a `run` step's
-# `command:` and have it just go. That's incompatible with sourcing the file
-# to test it behaviorally -- sourcing must define the functions without
-# running them. This is the only coverage that invocability change gets.
 RSpec.describe 'src/scripts/*.sh source guards' do
   scripts = Dir.glob(File.join(ScriptHarness::SCRIPTS_DIR, '*.sh')).map { |path| File.basename(path) }.sort
 
@@ -32,7 +26,7 @@ RSpec.describe 'src/scripts/*.sh source guards' do
 
   scripts.each do |script|
     it "#{script}: sourcing defines SetupEnv, runs nothing, leaves nothing behind" do
-      Dir.mktmpdir('c-1292-source-guard') do |cwd|
+      Dir.mktmpdir('source-guard') do |cwd|
         result = ScriptHarness.source(script, 'echo "SETUPENV_DEFINED=$(type -t SetupEnv)"', chdir: cwd)
 
         expect(result.status).to be_success, "sourcing failed (stderr: #{result.stderr})"
