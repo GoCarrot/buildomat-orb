@@ -18,8 +18,8 @@ require_relative '../lib/script_harness'
 require 'tmpdir'
 require 'fileutils'
 
-# Seed case from C-1292: source the real terraform-plan arg assembly, feed
-# it every I_LOCK rendering CircleCI can produce, and assert on terraform's
+# Source the real terraform-plan arg assembly, feed it every I_LOCK
+# rendering CircleCI can produce, and assert on terraform's
 # actual argv -- not on PLAN_ARGS in isolation. `~/terraform/terraform` is a
 # hardcoded path in the script, so this stubs terraform by pointing HOME at
 # a fixture directory rather than touching the shipped script -- TFPlan runs
