@@ -65,3 +65,11 @@ This is the Buildomat CircleCI Orb - a custom CircleCI orb that provides reusabl
 - Install dependencies: `brew bundle`
 - Organization name: `teak`
 - Orb name: `buildomat`
+
+## Worktrees
+
+`script/worktree` defaults to a path sibling to this checkout. This repo's main
+checkout doesn't live under `services/`, so pass an explicit path under
+`services/` when creating a worktree — `services/.claude/rules/` (gates,
+shared-trees, stating-evidence) only loads by walking up from there, and the
+default path lands outside it.
