@@ -53,5 +53,7 @@ BuildMessage() {
     echo "export ${I_TEMPLATE_NAME}=\$(cat /tmp/teak-orb/tf-plan-slack-template.json)" >> "${BASH_ENV}"
 }
 
-SetupEnv
-BuildMessage
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  BuildMessage
+fi

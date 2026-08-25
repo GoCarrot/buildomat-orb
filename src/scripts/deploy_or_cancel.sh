@@ -74,11 +74,13 @@ BuildInput() {
   fi
 }
 
-SetupEnv
-if [ "$I_ACTION" = "deploy" ]; then
-  GetAmiId
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  if [ "$I_ACTION" = "deploy" ]; then
+    GetAmiId
+  fi
+  GetRoleAndSfnArn
+  BuildInput
+  AssumeRole
+  Execute
 fi
-GetRoleAndSfnArn
-BuildInput
-AssumeRole
-Execute

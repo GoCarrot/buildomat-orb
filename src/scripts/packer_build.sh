@@ -57,5 +57,7 @@ PackerBuild() {
   PACKER_LOG=$I_PACKER_LOG ~/packer/packer build $BUILD_ARGS "${I_PATH}" | tee "${I_OUT_PATH}/${I_OUT_LOG}"
 }
 
-SetupEnv
-PackerBuild
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  PackerBuild
+fi

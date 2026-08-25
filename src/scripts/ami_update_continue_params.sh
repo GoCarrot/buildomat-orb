@@ -40,5 +40,7 @@ BuildParams() {
   echo "$PARAMS" | tee continue_params.json
 }
 
-SetupEnv
-BuildParams
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  BuildParams
+fi

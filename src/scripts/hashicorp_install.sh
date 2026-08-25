@@ -64,5 +64,7 @@ InstallTool() {
   fi
 }
 
-SetupEnv
-InstallTool
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  InstallTool
+fi

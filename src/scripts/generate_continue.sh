@@ -343,5 +343,7 @@ set -e
   echo "${TEMPLATE}" | tee "${I_OUT_PATH}"
 }
 
-SetupEnv
-GenerateContinue
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  GenerateContinue
+fi

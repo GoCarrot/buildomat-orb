@@ -65,7 +65,9 @@ ExecuteCommands() {
   fi
 }
 
-SetupEnv
-IdentifyDependents
-BuildCommands
-ExecuteCommands
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  SetupEnv
+  IdentifyDependents
+  BuildCommands
+  ExecuteCommands
+fi
