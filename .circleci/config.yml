@@ -1,0 +1,28 @@
+version: 2.1
+
+orbs:
+  circleci-cli: circleci/circleci-cli@0.1.11
+
+jobs:
+  test:
+    docker:
+      - image: cimg/ruby:3.3.9
+    steps:
+      - checkout
+      - circleci-cli/install
+      - run:
+          name: Install shellcheck
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y shellcheck
+      - run:
+          name: Install rspec
+          command: gem install rspec --no-document
+      - run:
+          name: Run test suite
+          command: rake test
+
+workflows:
+  test:
+    jobs:
+      - test
