@@ -93,7 +93,7 @@ GenerateContinuation() {
   echo "$CONTINUE_PARAMS" > "${I_OUT_PATH}"/continue_params.json
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   SetupEnv
   CheckEnvironmentActive
   GenerateContinuation

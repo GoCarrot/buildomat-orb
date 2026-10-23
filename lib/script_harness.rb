@@ -21,6 +21,10 @@ module ScriptHarness
   SCRIPTS_DIR = File.expand_path('../src/scripts', __dir__)
   DEFAULT_TIMEOUT = 5
 
+  # The scripts run their trailing entry point unless this is set, so sourcing
+  # them for a test defines their functions without doing the real work.
+  SOURCE_ONLY_VAR = 'BUILDOMAT_SOURCE_ONLY'
+
   Result = Struct.new(:stdout, :stderr, :status)
 
   class TimeoutError < StandardError; end
@@ -30,7 +34,7 @@ module ScriptHarness
     raise ArgumentError, "No such script: #{script_path}" unless File.file?(script_path)
 
     full_command = "source #{script_path.shellescape}\n#{bash_code}"
-    run(['bash', '-e', '-o', 'pipefail', '-c', full_command], env: env, timeout: timeout, chdir: chdir)
+    run(['bash', '-e', '-o', 'pipefail', '-c', full_command], env: { SOURCE_ONLY_VAR => '1' }.merge(env), timeout: timeout, chdir: chdir)
   end
 
   def self.run(cmd, env:, timeout:, chdir: nil)

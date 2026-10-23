@@ -1,3 +1,14 @@
+## 0.1.11
+
+BUG FIXES:
+
+* `terraform-init`: runs `terraform init -reconfigure`. The command restores a
+  cache that includes `.terraform/terraform.tfstate` (the saved backend
+  config), keyed only on the provider lock file, so a change to the backend
+  block with an unchanged lock file failed with "Backend configuration
+  changed". CI never migrates state, so the checked-in backend config now
+  always wins.
+
 ## 0.1.10
 
 BUG FIXES:

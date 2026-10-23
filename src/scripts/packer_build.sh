@@ -57,7 +57,7 @@ PackerBuild() {
   PACKER_LOG=$I_PACKER_LOG ~/packer/packer build $BUILD_ARGS "${I_PATH}" | tee "${I_OUT_PATH}/${I_OUT_LOG}"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   SetupEnv
   PackerBuild
 fi

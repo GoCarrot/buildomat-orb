@@ -29,7 +29,7 @@ PackerInit() {
   ~/packer/packer init "${I_PATH}"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   SetupEnv
   PackerInit
 fi
