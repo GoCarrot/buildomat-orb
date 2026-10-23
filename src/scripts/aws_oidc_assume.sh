@@ -48,7 +48,7 @@ PersistEnvVars() {
   } >> "${BASH_ENV}"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   if [ -z "$AWS_ACCESS_KEY_ID" ] || [ "${I_FORCE_ASSUMPTION}" == "1" ]; then
     SetupEnv
     AssumeRole

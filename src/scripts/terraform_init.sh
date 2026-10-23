@@ -29,7 +29,7 @@ TFInit() {
   ~/terraform/terraform -chdir="${I_PATH}" init -reconfigure -no-color | tee /tmp/tf_init.out
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   SetupEnv
   TFInit
 fi

@@ -53,7 +53,7 @@ BuildMessage() {
     echo "export ${I_TEMPLATE_NAME}=\$(cat /tmp/teak-orb/deploy-cancel-slack-template.json)" >> "${BASH_ENV}"
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   SetupEnv
   BuildMessage
 fi

@@ -65,7 +65,7 @@ ExecuteCommands() {
   fi
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   SetupEnv
   IdentifyDependents
   BuildCommands

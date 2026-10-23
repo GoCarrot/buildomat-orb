@@ -74,7 +74,7 @@ BuildInput() {
   fi
 }
 
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+if [[ -z "${BUILDOMAT_SOURCE_ONLY:-}" ]]; then
   SetupEnv
   if [ "$I_ACTION" = "deploy" ]; then
     GetAmiId

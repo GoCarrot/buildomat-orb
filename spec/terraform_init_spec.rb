@@ -17,6 +17,7 @@
 require_relative '../lib/script_harness'
 require 'tmpdir'
 require 'fileutils'
+require 'open3'
 
 RSpec.describe 'terraform_init.sh (behavioral)' do
   around do |example|
@@ -52,5 +53,16 @@ RSpec.describe 'terraform_init.sh (behavioral)' do
     args = result.stdout[/^FAKE_TERRAFORM_ARGS:(.*)$/, 1] || raise("terraform stub was never invoked:\n#{result.stdout}")
     expect(args).to match(/(\A|\s)init(\s|\z)/)
     expect(args).to include('-reconfigure')
+  end
+
+  # CircleCI runs a step's command as a string, not as a file, so run it that way.
+  it 'runs when the script body is executed as a command string' do
+    script = File.read(File.join(ScriptHarness::SCRIPTS_DIR, 'terraform_init.sh'))
+    env = { 'HOME' => @fixture_root, 'I_PATH' => @tf_path }
+
+    stdout, stderr, status = Open3.capture3(env, 'bash', '-eo', 'pipefail', '-c', script)
+
+    expect(status).to be_success, "failed (stderr: #{stderr})"
+    expect(stdout).to include('FAKE_TERRAFORM_ARGS:'), "terraform stub was never invoked:\n#{stdout}"
   end
 end
