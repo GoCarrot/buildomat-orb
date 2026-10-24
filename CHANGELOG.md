@@ -1,3 +1,16 @@
+## 0.1.14
+
+ENHANCEMENTS:
+
+* `terraform-multi-root-continuation` job (and `generate-multi-root-continue`
+  command): the per-root Slack notification now links the root's plan log, the
+  same artifact URL the single-root path uses, instead of the plan job.
+* `terraform-slack-on-hold` job / `terraform-slack-on-hold-message` command:
+  `root` now only names the root in the message; the link is always the plan
+  log you pass in `plan-log-url`.
+* `terraform-plan` with `continuation: true` no longer writes the `plan_job_url`
+  file added in 0.1.13; the plan log URL is `plan-log-url` in `continue_params.json`.
+
 ## 0.1.13
 
 ENHANCEMENTS:

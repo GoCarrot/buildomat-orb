@@ -26,10 +26,8 @@ SetupEnv() {
 
 BuildMessage() {
   local subject="${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH}"
-  local link_text="Terraform Plan Log"
   if [[ -n "${I_ROOT}" ]]; then
     subject="${subject}: ${I_ROOT} apply"
-    link_text="Terraform Plan Job (${I_ROOT})"
   else
     subject="${subject} job"
   fi
@@ -51,7 +49,7 @@ BuildMessage() {
           \"fields\": [
             {
               \"type\": \"mrkdwn\",
-              \"text\": \"<${I_PLAN_LOG_URL}|${link_text}>\"
+              \"text\": \"<${I_PLAN_LOG_URL}|Terraform Plan Log>\"
             },
             {
               \"type\": \"mrkdwn\",

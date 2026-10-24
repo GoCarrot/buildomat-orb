@@ -28,13 +28,26 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
     end
   end
 
+  # A root's plan output as the real terraform-plan job leaves it, so the
+  # fan-in is tested against what the plan job actually writes.
   def plan(root, changes:)
-    FileUtils.mkdir_p(File.join(@plan_base, root))
+    out = File.join(@plan_base, root)
+    FileUtils.mkdir_p(out)
     return unless changes
 
-    FileUtils.touch(File.join(@plan_base, root, 'tf_plan_changes'))
-    File.write(File.join(@plan_base, root, 'plan_job_url'), "https://circleci.com/gh/GoCarrot/arboretum/1\n")
-    File.write(File.join(@plan_base, root, 'continue_params.json'), '{"run-apply":true, "continuation-cache-id": "plan-wf"}')
+    FileUtils.touch(File.join(out, 'tf_plan_changes'))
+    env = {
+      'I_OUT_PATH' => out, 'I_WORKSPACE' => '', 'I_OUT_LOG' => 'plan.log',
+      'I_CONTINUATION_PARAMETERS' => '', 'ENVIRONMENT_ACTIVE' => 'true',
+      'CIRCLE_WORKFLOW_ID' => 'plan-wf', 'CIRCLE_WORKFLOW_JOB_ID' => "job-#{root.tr('/', '-')}",
+      'CIRCLE_NODE_INDEX' => '0'
+    }
+    result = ScriptHarness.source('terraform_plan_continuation.sh', 'GenerateContinuation', env: env)
+    raise "plan fixture failed: #{result.stderr}" unless result.status.success?
+  end
+
+  def plan_log_url(root)
+    "https://output.circle-artifacts.com/output/job/job-#{root.tr('/', '-')}/artifacts/0#{@plan_base}/#{root}/plan.log"
   end
 
   def generate(roots, slack_contexts: '')
@@ -145,39 +158,38 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
         'name' => 'Notify hold (production)',
         'context' => ['Slack'],
         'root' => 'production',
-        'plan-log-url' => 'https://circleci.com/gh/GoCarrot/arboretum/1'
+        'plan-log-url' => plan_log_url('production')
       )
       expect(hold['hold']).not_to have_key('requires')
       expect(notify['buildomat/terraform-slack-on-hold']).not_to have_key('requires')
       expect(apply['buildomat/terraform-apply']['requires']).to eq(['Approve apply (production)'])
     end
 
-    it 'links each root to its own plan job' do
+    it 'links each root to its own plan log artifact' do
       plan('meta', changes: true)
       plan('github', changes: true)
-      File.write(File.join(@plan_base, 'meta', 'plan_job_url'), "https://circleci.com/gh/o/r/1\n")
-      File.write(File.join(@plan_base, 'github', 'plan_job_url'), "https://circleci.com/gh/o/r/2\n")
 
       expect(generate('meta,github', slack_contexts: 'Slack').status).to be_success
       urls = jobs.select { |j| j.key?('buildomat/terraform-slack-on-hold') }.to_h do |j|
         [j.values.first['root'], j.values.first['plan-log-url']]
       end
-      expect(urls).to eq('meta' => 'https://circleci.com/gh/o/r/1', 'github' => 'https://circleci.com/gh/o/r/2')
+      expect(urls).to eq('meta' => plan_log_url('meta'), 'github' => plan_log_url('github'))
+      expect(urls.values).to all(start_with('https://output.circle-artifacts.com/output/job/'))
     end
 
-    it 'fails when a changed root has no plan_job_url' do
+    it 'fails when a changed root has no plan-log-url' do
       plan('meta', changes: true)
-      FileUtils.rm(File.join(@plan_base, 'meta', 'plan_job_url'))
+      File.write(File.join(@plan_base, 'meta', 'continue_params.json'), '{"run-apply":true, "continuation-cache-id": "plan-wf"}')
 
       result = generate('meta', slack_contexts: 'Slack')
       expect(result.status).not_to be_success
-      expect(result.stderr).to include('no plan_job_url')
+      expect(result.stderr).to include('no plan-log-url')
     end
   end
 
-  it 'emits no notification and ignores plan_job_url when slack_contexts is empty' do
+  it 'emits no notification and ignores plan-log-url when slack_contexts is empty' do
     plan('meta', changes: true)
-    FileUtils.rm(File.join(@plan_base, 'meta', 'plan_job_url'))
+    File.write(File.join(@plan_base, 'meta', 'continue_params.json'), '{"run-apply":true, "continuation-cache-id": "plan-wf"}')
 
     expect(generate('meta').status).to be_success
     expect(jobs.map { |j| j.keys.first }).to eq(%w[hold buildomat/terraform-apply])

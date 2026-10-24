@@ -22,13 +22,13 @@ resource_class: small
 parameters:
   plan-log-url:
     type: "string"
-    description: "URL for the log file (or, with root, the plan job) from running terraform plan."
+    description: "URL for the log file from running terraform plan."
 
   root:
     type: "string"
     description: >
       Terraform root this hold is for, for repos with several roots. When set,
-      the message names it and links the plan job instead of a plan log.
+      the message names it.
     default: ""
 
   channel:
