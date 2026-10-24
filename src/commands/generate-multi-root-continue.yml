@@ -1,0 +1,55 @@
+# Copyright 2026 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: >
+  Writes a continuation config for a repo with several terraform roots: one
+  approval hold + apply per root whose plan has changes. Writes nothing when
+  no root changed. Expects each root's terraform-plan to have used
+  out_path <plan_base>/<root>, continuation_cache_key
+  "{{ .Environment.CIRCLE_WORKFLOW_ID }}-<root>", and a workspace attached at
+  plan_base.
+
+parameters:
+  roots:
+    type: string
+    description: "Terraform roots (comma or newline separated), as paths relative to the repo root."
+  plan_base:
+    type: string
+    default: "/tmp/teak-orb-terraform"
+    description: "Directory holding one subdirectory of plan output per root."
+  terraform_version:
+    type: string
+  contexts:
+    type: string
+    default: ""
+    description: "Contexts (comma separated) attached to the generated apply jobs."
+  out_path:
+    type: string
+    default: ".circleci/continue.yml"
+    description: "Where the continuation config is written."
+  orb:
+    type: string
+    description: "The fully qualified buildomat orb you are using, e.g. \"teak/buildomat@0.1\""
+
+steps:
+  - run:
+      name: "Generate multi-root continuation pipeline"
+      environment:
+        I_ROOTS: << parameters.roots >>
+        I_PLAN_BASE: << parameters.plan_base >>
+        I_TERRAFORM_VERSION: << parameters.terraform_version >>
+        I_CONTEXTS: << parameters.contexts >>
+        I_OUT_PATH: << parameters.out_path >>
+        I_ORB: << parameters.orb >>
+      command: << include(scripts/generate_multi_root_continue.sh) >>

@@ -1,3 +1,19 @@
+## 0.1.12
+
+ENHANCEMENTS:
+
+* New `terraform-multi-root-continuation` job (and `generate-multi-root-continue`
+  command) for repos with several terraform roots. After one `terraform-plan`
+  per root, it continues with an approval hold + apply for each root whose plan
+  has changes, and nothing for the rest. When no root changed it ends green
+  without continuing.
+* `terraform-plan` command/job: new `continuation_cache_key` param (default
+  unchanged, the workflow id). Several plans in one workflow need distinct
+  keys, since the first save to a key wins.
+* `terraform-plan` job: new `persist_root` param (default unchanged,
+  `out_path`). Point it at a parent of `out_path` so parallel plans keep their
+  own subdirectory in the workspace instead of overwriting each other.
+
 ## 0.1.11
 
 BUG FIXES:
