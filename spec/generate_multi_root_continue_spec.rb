@@ -33,15 +33,17 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
     return unless changes
 
     FileUtils.touch(File.join(@plan_base, root, 'tf_plan_changes'))
+    File.write(File.join(@plan_base, root, 'plan_job_url'), "https://circleci.com/gh/GoCarrot/arboretum/1\n")
     File.write(File.join(@plan_base, root, 'continue_params.json'), '{"run-apply":true, "continuation-cache-id": "plan-wf"}')
   end
 
-  def generate(roots)
+  def generate(roots, slack_contexts: '')
     env = {
       'I_ROOTS' => roots,
       'I_PLAN_BASE' => @plan_base,
       'I_TERRAFORM_VERSION' => '1.16.4',
       'I_CONTEXTS' => 'AWS-OIDC-Role,Slack',
+      'I_SLACK_CONTEXTS' => slack_contexts,
       'I_OUT_PATH' => @out_path,
       'I_ORB' => 'teak/buildomat@0.1',
       # A rerun-from-failed: the fan-in's workflow id differs from the plans'.
@@ -126,5 +128,59 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
 
     expect(result.status).not_to be_success
     expect(result.stderr).to include('Invalid root name')
+  end
+
+  describe 'with slack_contexts' do
+    it 'notifies alongside the hold, then applies only the changed root' do
+      plan('meta', changes: false)
+      plan('production', changes: true)
+
+      expect(generate('meta,production', slack_contexts: 'Slack').status).to be_success
+      expect(jobs.map { |j| j.values.first['name'] }).to eq(
+        ['Notify hold (production)', 'Approve apply (production)', 'Apply (production)']
+      )
+
+      notify, hold, apply = jobs
+      expect(notify['buildomat/terraform-slack-on-hold']).to eq(
+        'name' => 'Notify hold (production)',
+        'context' => ['Slack'],
+        'root' => 'production',
+        'plan-log-url' => 'https://circleci.com/gh/GoCarrot/arboretum/1'
+      )
+      expect(hold['hold']).not_to have_key('requires')
+      expect(notify['buildomat/terraform-slack-on-hold']).not_to have_key('requires')
+      expect(apply['buildomat/terraform-apply']['requires']).to eq(['Approve apply (production)'])
+    end
+
+    it 'links each root to its own plan job' do
+      plan('meta', changes: true)
+      plan('github', changes: true)
+      File.write(File.join(@plan_base, 'meta', 'plan_job_url'), "https://circleci.com/gh/o/r/1\n")
+      File.write(File.join(@plan_base, 'github', 'plan_job_url'), "https://circleci.com/gh/o/r/2\n")
+
+      expect(generate('meta,github', slack_contexts: 'Slack').status).to be_success
+      urls = jobs.select { |j| j.key?('buildomat/terraform-slack-on-hold') }.to_h do |j|
+        [j.values.first['root'], j.values.first['plan-log-url']]
+      end
+      expect(urls).to eq('meta' => 'https://circleci.com/gh/o/r/1', 'github' => 'https://circleci.com/gh/o/r/2')
+    end
+
+    it 'fails when a changed root has no plan_job_url' do
+      plan('meta', changes: true)
+      FileUtils.rm(File.join(@plan_base, 'meta', 'plan_job_url'))
+
+      result = generate('meta', slack_contexts: 'Slack')
+      expect(result.status).not_to be_success
+      expect(result.stderr).to include('no plan_job_url')
+    end
+  end
+
+  it 'emits no notification and ignores plan_job_url when slack_contexts is empty' do
+    plan('meta', changes: true)
+    FileUtils.rm(File.join(@plan_base, 'meta', 'plan_job_url'))
+
+    expect(generate('meta').status).to be_success
+    expect(jobs.map { |j| j.keys.first }).to eq(%w[hold buildomat/terraform-apply])
+    expect(jobs.first['hold']).not_to have_key('requires')
   end
 end

@@ -17,7 +17,8 @@
 # Builds a continuation config for a repo with several terraform roots, each
 # planned by its own terraform-plan job (out_path <plan base>/<root>). Every
 # root whose plan has changes gets an approval hold and an apply of exactly
-# that root's planfile. Roots with no changes get nothing. If no root changed,
+# that root's planfile, and, if I_SLACK_CONTEXTS is set, a Slack notification
+# that runs alongside the hold, not before it. Roots with no changes get nothing. If no root changed,
 # no config is written, and the caller skips the continuation.
 
 SetupEnv() {
@@ -26,6 +27,7 @@ SetupEnv() {
   I_PLAN_BASE=$(eval echo "${I_PLAN_BASE}")
   I_TERRAFORM_VERSION=$(eval echo "${I_TERRAFORM_VERSION}")
   I_CONTEXTS=$(eval echo "${I_CONTEXTS}")
+  I_SLACK_CONTEXTS=$(eval echo "${I_SLACK_CONTEXTS}")
   I_OUT_PATH=$(eval echo "${I_OUT_PATH}")
   I_ORB=$(eval echo "${I_ORB}")
 
@@ -33,25 +35,28 @@ SetupEnv() {
   echo "I_PLAN_BASE=${I_PLAN_BASE}"
   echo "I_TERRAFORM_VERSION=${I_TERRAFORM_VERSION}"
   echo "I_CONTEXTS=${I_CONTEXTS}"
+  echo "I_SLACK_CONTEXTS=${I_SLACK_CONTEXTS}"
   echo "I_OUT_PATH=${I_OUT_PATH}"
   echo "I_ORB=${I_ORB}"
 }
 
 ContextsYaml() {
-  if [[ -z "${I_CONTEXTS}" ]]; then
+  local contexts="$1"
+  if [[ -z "${contexts}" ]]; then
     echo "[]"
     return
   fi
   local list=""
-  for context in $(echo "${I_CONTEXTS}" | tr ',' '\n'); do
+  for context in $(echo "${contexts}" | tr ',' '\n'); do
     list="${list:+${list}, }\"${context}\""
   done
   echo "[${list}]"
 }
 
 GenerateMultiRootContinue() {
-  local contexts jobs root changed cache_id
-  contexts=$(ContextsYaml)
+  local contexts slack_contexts jobs root changed cache_id plan_job_url
+  contexts=$(ContextsYaml "${I_CONTEXTS}")
+  slack_contexts=$(ContextsYaml "${I_SLACK_CONTEXTS}")
   jobs=""
   changed=()
 
@@ -78,6 +83,20 @@ GenerateMultiRootContinue() {
       echo "${root} has changes but no continuation-cache-id in continue_params.json" >&2
       exit 1
     fi
+    if [[ -n "${I_SLACK_CONTEXTS}" ]]; then
+      plan_job_url=$(cat "${I_PLAN_BASE}/${root}/plan_job_url" 2>/dev/null || true)
+      if [[ -z "${plan_job_url}" ]]; then
+        echo "${root} has changes but no plan_job_url to link in Slack" >&2
+        exit 1
+      fi
+      jobs="${jobs}
+      - buildomat/terraform-slack-on-hold:
+          name: \"Notify hold (${root})\"
+          context: ${slack_contexts}
+          root: \"${root}\"
+          plan-log-url: \"${plan_job_url}\""
+    fi
+
     echo "${root}: has changes"
     changed+=("${root}")
     jobs="${jobs}

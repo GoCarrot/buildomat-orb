@@ -78,6 +78,9 @@ CheckEnvironmentActive() {
 GenerateContinuation() {
   CONTINUE_PARAMS=""
   if [ -f "${I_OUT_PATH}"/tf_plan_changes ]; then
+    # Kept out of continue_params.json: the continuation pipeline declares an
+    # explicit parameter list and rejects keys it doesn't know.
+    echo "${CIRCLE_BUILD_URL}" > "${I_OUT_PATH}"/plan_job_url
     CONTINUE_PARAMS="{\"run-apply\":true, \"environment-active\":${ENVIRONMENT_ACTIVE}, \"continuation-cache-id\": \"${CIRCLE_WORKFLOW_ID}\", \"workspace\":\"${I_WORKSPACE}\", \"plan-log-url\":\"https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}${I_OUT_PATH}/${I_OUT_LOG}\"}"
   else
     CONTINUE_PARAMS="{\"environment-active\":${ENVIRONMENT_ACTIVE}}"
