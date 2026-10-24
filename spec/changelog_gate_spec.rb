@@ -42,22 +42,40 @@ RSpec.describe ChangelogGate do
     end
   end
 
-  describe '.documents_newer_than?' do
-    it 'passes for a genuinely newer entry' do
-      expect(described_class.documents_newer_than?("## 0.1.11\n", '0.1.10')).to be(true)
+  describe '.next_version' do
+    it 'bumps each segment and zeroes the ones below it' do
+      expect(described_class.next_version('0.1.12', 'patch')).to eq('0.1.13')
+      expect(described_class.next_version('0.1.12', 'minor')).to eq('0.2.0')
+      expect(described_class.next_version('0.1.12', 'major')).to eq('1.0.0')
+    end
+
+    it 'raises on a bump the orb CLI does not offer' do
+      expect { described_class.next_version('0.1.12', 'mega') }.to raise_error(ArgumentError, /mega/)
+    end
+  end
+
+  describe '.documents_next_version?' do
+    it 'passes when the top entry is exactly the version the bump will publish' do
+      expect(described_class.documents_next_version?("## 0.1.13\n", '0.1.12', 'patch')).to be(true)
+      expect(described_class.documents_next_version?("## 0.2.0\n", '0.1.12', 'minor')).to be(true)
     end
 
     it 'fails when the top entry is already published' do
-      expect(described_class.documents_newer_than?("## 0.1.10\n", '0.1.10')).to be(false)
+      expect(described_class.documents_next_version?("## 0.1.12\n", '0.1.12', 'patch')).to be(false)
     end
 
     it 'fails when the top entry is stale' do
-      expect(described_class.documents_newer_than?("## 0.1.9\n", '0.1.10')).to be(false)
+      expect(described_class.documents_next_version?("## 0.1.9\n", '0.1.12', 'patch')).to be(false)
     end
 
-    it 'raises on a non-semver header instead of a raw Gem::Version error' do
-      expect { described_class.documents_newer_than?("## Unreleased\n", '0.1.10') }
-        .to raise_error(ChangelogGate::MissingVersionHeader)
+    # The old "newer than" check let this through and went red only after the
+    # irreversible publish of 0.1.13.
+    it 'fails when the entry is newer than the bump will produce' do
+      expect(described_class.documents_next_version?("## 0.2.0\n", '0.1.12', 'patch')).to be(false)
+    end
+
+    it 'fails on a header that is not a version' do
+      expect(described_class.documents_next_version?("## Unreleased\n", '0.1.12', 'patch')).to be(false)
     end
   end
 

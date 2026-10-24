@@ -30,11 +30,24 @@ module ChangelogGate
     top_version(changelog_text) == expected_version
   end
 
-  # True when the CHANGELOG's top entry is a newer semver than `floor_version`.
-  def self.documents_newer_than?(changelog_text, floor_version)
-    Gem::Version.new(top_version(changelog_text)) > Gem::Version.new(floor_version)
-  rescue ArgumentError
-    raise MissingVersionHeader, "CHANGELOG's top entry (##{top_version(changelog_text)}) is not a valid version"
+  # The version `circleci orb publish promote ... <bump>` will publish when
+  # `published_version` is the current latest.
+  def self.next_version(published_version, bump)
+    major, minor, patch = Gem::Version.new(published_version).segments
+    case bump
+    when 'patch' then [major, minor, patch + 1]
+    when 'minor' then [major, minor + 1, 0]
+    when 'major' then [major + 1, 0, 0]
+    else raise ArgumentError, "unknown bump #{bump.inspect}; expected patch, minor or major"
+    end.join('.')
+  end
+
+  # True when the CHANGELOG's top entry is titled exactly the version `bump`
+  # will publish. Exact rather than "newer than": promoting is irreversible,
+  # so an entry titled 0.2.0 ahead of a patch bump has to fail before the
+  # publish, not after it.
+  def self.documents_next_version?(changelog_text, published_version, bump)
+    top_version(changelog_text) == next_version(published_version, bump)
   end
 
   class UnrecognizedPromoteOutput < StandardError; end
