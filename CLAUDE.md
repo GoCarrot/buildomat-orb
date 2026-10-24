@@ -14,7 +14,7 @@ This is the Buildomat CircleCI Orb - a custom CircleCI orb that provides reusabl
 - `rake test` - Run both validation and shellcheck
 
 ### Publishing
-CI is the default path (`.circleci/config.yml`). Every push runs `test`; on `main`, `test` -> `publish` (to `dev:<sha>` and `dev:alpha`) -> `hold` (approval) -> `promote`. `promote` runs `script/ci-promote`, which reads the commit *subject* for `Promote to: patch|minor|major`; no marker means it ends green without publishing. A default merge-commit subject has no marker, so set one by editing the merge title, squash-merging with it as the PR title, or pushing a commit with that subject. See README "Publishing".
+CI is the default path (`.circleci/config.yml`, a setup workflow). Every push runs `test`; on `main`, `test` -> `publish` (to `dev:<sha>` and `dev:alpha`) -> `gate`. `gate` runs `script/ci-promote-gate`, which reads the commit *subject* for `Promote to: patch|minor|major`; no marker means it ends green with no hold. A valid bump continues into `.circleci/promote.yml`: `notify` (Slack) alongside `hold` (approval), then `promote` (`script/ci-promote <bump>`). A default merge-commit subject has no marker, so set one by editing the merge title, squash-merging with it as the PR title, or pushing a commit with that subject. See README "Publishing".
 
 Break-glass, from a laptop (the `[label]` arg picks `dev:<label>`, default `alpha`):
 - `rake publish` - Publish the orb with dev:alpha label for testing

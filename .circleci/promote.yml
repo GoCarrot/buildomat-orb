@@ -1,0 +1,83 @@
+version: 2.1
+
+# Continuation of the setup workflow in config.yml, only for a commit whose
+# subject asked for a promote. Parameters come from script/ci-promote-gate.
+
+orbs:
+  circleci-cli: circleci/circleci-cli@0.1.11
+  slack: circleci/slack@4
+
+# CircleCI requires defaults. Empty is safe: script/ci-promote refuses an
+# empty bump.
+parameters:
+  bump:
+    type: string
+    default: ""
+  orb-version:
+    type: string
+    default: ""
+
+commands:
+  # Same pin as config.yml's install-cli; see the comment there.
+  install-cli:
+    steps:
+      - circleci-cli/install:
+          version: v0.1.33494
+
+jobs:
+  # Runs alongside `hold`, not before it: nothing requires it, so a Slack
+  # failure can't block approval.
+  notify:
+    docker:
+      - image: cimg/base:stable
+    resource_class: small
+    steps:
+      - slack/notify:
+          event: always
+          custom: |
+            {
+              "text": "teak/buildomat << pipeline.parameters.orb-version >> (<< pipeline.parameters.bump >>) is waiting for approval to promote.",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "teak/buildomat << pipeline.parameters.orb-version >> (<< pipeline.parameters.bump >>) is waiting for approval to promote. :raised_hand:",
+                    "emoji": true
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "<https://app.circleci.com/pipelines/workflows/${CIRCLE_WORKFLOW_ID}|Approve in CircleCI>"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  promote:
+    docker:
+      - image: cimg/ruby:3.3.9
+    steps:
+      - checkout
+      - install-cli
+      - circleci-cli/setup:
+          token: CIRCLE_API_TOKEN
+      - run:
+          name: Promote dev:<sha>
+          command: script/ci-promote << pipeline.parameters.bump >>
+
+workflows:
+  promote:
+    jobs:
+      - notify:
+          context: Slack
+      - hold:
+          type: approval
+      - promote:
+          context: CircleCI
+          requires:
+            - hold

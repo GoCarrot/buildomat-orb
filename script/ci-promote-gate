@@ -1,0 +1,41 @@
+#!/bin/bash
+set -euo pipefail
+
+# script/ci-promote-gate — the CI `gate` job's decision.
+#
+# Reads the HEAD commit *subject* for `Promote to: patch|minor|major` (the
+# same regex as teak/sdk-utils' tag-promote; subject only) and, when the
+# subject asks for a release, writes the continuation parameters for
+# .circleci/promote.yml to $PROMOTE_PARAMS_FILE (default
+# /tmp/promote-params.json):
+#
+#   no marker           -> exit 0, no file; the job halts green
+#   unknown value       -> exit 1 (a typo'd promote must not pass silently)
+#   patch|minor|major   -> `rake promote:preflight` (fails if the CHANGELOG
+#                          isn't ready), then {"bump", "orb-version"}
+#
+# script/ci-promote does the promoting once the hold is approved.
+
+params_file="${PROMOTE_PARAMS_FILE:-/tmp/promote-params.json}"
+rm -f "$params_file"
+
+subject="$(git log -1 --pretty=%s)"
+requested="$(printf '%s\n' "$subject" | perl -wne '/[Pp]romote( to)?: ([\w\.\-]+)/i and print $2')"
+
+if [ -z "$requested" ]; then
+  echo "No 'Promote to:' in the commit subject; nothing to promote."
+  exit 0
+fi
+
+bump="$(printf '%s' "$requested" | tr '[:upper:]' '[:lower:]')"
+case "$bump" in
+  patch | minor | major) ;;
+  *)
+    echo "'Promote to: ${requested}' is not a bump this orb can publish; expected patch, minor or major." >&2
+    exit 1
+    ;;
+esac
+
+version="$(rake --silent "promote:preflight[${bump}]")"
+jq -n --arg bump "$bump" --arg version "$version" '{bump: $bump, "orb-version": $version}' > "$params_file"
+echo "Promoting teak/buildomat ${version} (${bump}); continuing to the approval hold."

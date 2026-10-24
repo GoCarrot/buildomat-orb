@@ -48,9 +48,8 @@ end
 
 # Pre-check: catches "forgot the entry" / "entry is stale" / "entry is for a
 # different bump" before anything ships.
-def ensure_changelog_documents_next_version!(bump)
-  published = registry_version
-  return if ChangelogGate.documents_next_version?(changelog_text, published, bump)
+def ensure_changelog_documents_next_version!(bump, published = registry_version)
+  return ChangelogGate.next_version(published, bump) if ChangelogGate.documents_next_version?(changelog_text, published, bump)
 
   fail_loudly(<<~MSG)
     CHANGELOG.md's top entry (###{ChangelogGate.top_version(changelog_text)}) is not the version a #{bump} promote will publish
@@ -113,6 +112,11 @@ end
 
 desc 'Promote a dev label (default alpha) to production, bumping patch/minor/major'
 namespace :promote do
+  desc 'Fail unless CHANGELOG.md documents the version a bump will publish; print that version'
+  task :preflight, [:bump] do |_t, args|
+    puts ensure_changelog_documents_next_version!(args.fetch(:bump))
+  end
+
   %w[patch minor major].each do |version|
     desc "Promote dev:<label> (default alpha) to production and bump the #{version} in version"
     task version.to_sym, [:label] do |_t, args|

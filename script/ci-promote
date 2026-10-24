@@ -1,31 +1,18 @@
 #!/bin/bash
 set -euo pipefail
 
-# script/ci-promote — the CI `promote` job's body.
-#
-# Reads the HEAD commit *subject* for `Promote to: patch|minor|major` (the
-# same regex as teak/sdk-utils' tag-promote; subject only) and
-# runs `rake promote:<bump>[<sha>]`, promoting the dev:<sha> orb that this
-# pipeline's `publish` job pushed. The Rakefile's CHANGELOG gate runs first.
-#
-#   no marker           -> exit 0, nothing published
-#   unknown value       -> exit 1 (a typo'd promote must not pass silently)
+# script/ci-promote <patch|minor|major> — the CI `promote` job's body, run
+# after the hold is approved. Promotes the dev:<sha> orb that this pipeline's
+# `publish` job pushed, via `rake promote:<bump>[<sha>]`. The Rakefile's
+# CHANGELOG gate runs first. script/ci-promote-gate chose the bump.
 
 : "${CIRCLE_SHA1:?CIRCLE_SHA1 is not set; refusing to guess which dev label to promote}"
 
-subject="$(git log -1 --pretty=%s)"
-requested="$(printf '%s\n' "$subject" | perl -wne '/[Pp]romote( to)?: ([\w\.\-]+)/i and print $2')"
-
-if [ -z "$requested" ]; then
-  echo "No 'Promote to:' in the commit subject; nothing to promote."
-  exit 0
-fi
-
-bump="$(printf '%s' "$requested" | tr '[:upper:]' '[:lower:]')"
+bump="${1:-}"
 case "$bump" in
   patch | minor | major) ;;
   *)
-    echo "'Promote to: ${requested}' is not a bump this orb can publish; expected patch, minor or major." >&2
+    echo "usage: script/ci-promote <patch|minor|major> (got '${bump}')" >&2
     exit 1
     ;;
 esac
