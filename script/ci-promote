@@ -4,7 +4,7 @@ set -euo pipefail
 # script/ci-promote — the CI `promote` job's body.
 #
 # Reads the HEAD commit *subject* for `Promote to: patch|minor|major` (the
-# same regex as teak/sdk-utils' tag-promote; subject only, see C-1190) and
+# same regex as teak/sdk-utils' tag-promote; subject only) and
 # runs `rake promote:<bump>[<sha>]`, promoting the dev:<sha> orb that this
 # pipeline's `publish` job pushed. The Rakefile's CHANGELOG gate runs first.
 #

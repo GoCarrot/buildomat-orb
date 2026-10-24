@@ -68,7 +68,6 @@ RSpec.describe 'script/ci-promote' do
     expect(out).to match(/nothing to promote/i)
   end
 
-  # C-1190: a marker in the body must not count, only the subject.
   it 'ignores a promote marker in the commit body' do
     out, status, calls = run_with_message(script, "Tidy docs\n\nPromote to: patch\n", sha)
     expect(status).to be_success, out
@@ -83,14 +82,9 @@ RSpec.describe 'script/ci-promote' do
   end
 
   it 'fails rather than promoting dev:alpha when CIRCLE_SHA1 is unset' do
-    Dir.mktmpdir('ci-promote-nosha') do |dir|
-      env = { 'GIT_AUTHOR_NAME' => 't', 'GIT_AUTHOR_EMAIL' => 't@example.com',
-              'GIT_COMMITTER_NAME' => 't', 'GIT_COMMITTER_EMAIL' => 't@example.com' }
-      Open3.capture2e(env, 'git', 'init', '-q', chdir: dir)
-      Open3.capture2e(env, 'git', 'commit', '-q', '--allow-empty', '-m', 'Promote to: patch', chdir: dir)
-      out, status = Open3.capture2e(env.merge('CIRCLE_SHA1' => ''), script, chdir: dir)
-      expect(status).not_to be_success
-      expect(out).to include('CIRCLE_SHA1')
-    end
+    out, status, calls = run_with_message(script, 'Promote to: patch', '')
+    expect(status).not_to be_success
+    expect(calls).to be_empty
+    expect(out).to include('CIRCLE_SHA1')
   end
 end

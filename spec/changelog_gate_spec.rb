@@ -68,8 +68,6 @@ RSpec.describe ChangelogGate do
       expect(described_class.documents_next_version?("## 0.1.9\n", '0.1.12', 'patch')).to be(false)
     end
 
-    # The old "newer than" check let this through and went red only after the
-    # irreversible publish of 0.1.13.
     it 'fails when the entry is newer than the bump will produce' do
       expect(described_class.documents_next_version?("## 0.2.0\n", '0.1.12', 'patch')).to be(false)
     end

@@ -43,9 +43,8 @@ module ChangelogGate
   end
 
   # True when the CHANGELOG's top entry is titled exactly the version `bump`
-  # will publish. Exact rather than "newer than": promoting is irreversible,
-  # so an entry titled 0.2.0 ahead of a patch bump has to fail before the
-  # publish, not after it.
+  # will publish. Exact: promoting is irreversible, so a 0.2.0 entry ahead of
+  # a patch bump must fail before publishing.
   def self.documents_next_version?(changelog_text, published_version, bump)
     top_version(changelog_text) == next_version(published_version, bump)
   end

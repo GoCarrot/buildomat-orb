@@ -3,9 +3,6 @@ version: 2.1
 orbs:
   circleci-cli: circleci/circleci-cli@0.1.11
 
-# Branches run `test`. main runs test -> publish -> hold -> promote.
-# See "Publishing" in README.md.
-
 commands:
   # The Rakefile parses `circleci` output (ChangelogGate.parse_promoted_version,
   # registry_version) and is pinned to this version. The orb's default,

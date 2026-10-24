@@ -103,9 +103,6 @@ end
 desc 'Validate the orb, run shellcheck on all scripts, and run the Ruby unit tests'
 task :test => [:validate, :shellcheck, :spec]
 
-# CI publishes every main commit to dev:<sha> as well as dev:alpha, and
-# promotes the dev:<sha> one, so a laptop `rake publish` of a branch to
-# dev:alpha can't change what a pending approval ships.
 desc 'Publish the orb to a dev label (rake publish[label]; default alpha)'
 task :publish, [:label] do |_t, args|
   args.with_defaults(label: 'alpha')
