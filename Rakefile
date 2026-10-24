@@ -48,7 +48,8 @@ end
 
 # Pre-check: catches "forgot the entry" / "entry is stale" / "entry is for a
 # different bump" before anything ships.
-def ensure_changelog_documents_next_version!(bump, published = registry_version)
+def ensure_changelog_documents_next_version!(bump)
+  published = registry_version
   return ChangelogGate.next_version(published, bump) if ChangelogGate.documents_next_version?(changelog_text, published, bump)
 
   fail_loudly(<<~MSG)
