@@ -24,10 +24,18 @@ parameters:
     description: "Environment variable name to export our template to."
     default: "TEAK_TF_ON_HOLD"
 
+  root:
+    type: "string"
+    description: >
+      Terraform root this hold is for, for repos with several roots. When set,
+      the message names it and links the plan job instead of a plan log.
+    default: ""
+
 steps:
   - run:
       name: "Generate notification template"
       environment:
         I_PLAN_LOG_URL: << parameters.plan-log-url >>
         I_TEMPLATE_NAME: << parameters.template-name >>
+        I_ROOT: << parameters.root >>
       command: << include(scripts/terraform_slack_on_hold_message.sh) >>

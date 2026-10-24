@@ -17,21 +17,34 @@
 SetupEnv() {
   I_PLAN_LOG_URL=$(eval echo "${I_PLAN_LOG_URL}")
   I_TEMPLATE_NAME=$(eval echo "${I_TEMPLATE_NAME}")
+  I_ROOT=$(eval echo "${I_ROOT}")
 
   echo "I_PLAN_LOG_URL"="${I_PLAN_LOG_URL}"
   echo "I_TEMPLATE_NAME"="${I_TEMPLATE_NAME}"
+  echo "I_ROOT"="${I_ROOT}"
 }
 
 BuildMessage() {
+  # With a root (multi-root repos), name it and link the plan job page rather
+  # than a plan log file.
+  local subject="${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH}"
+  local link_text="Terraform Plan Log"
+  if [[ -n "${I_ROOT}" ]]; then
+    subject="${subject}: ${I_ROOT} apply"
+    link_text="Terraform Plan Job (${I_ROOT})"
+  else
+    subject="${subject} job"
+  fi
+
   mkdir -p /tmp/teak-orb
   echo "{
-      \"text\": \"${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH} job on hold, waiting for approval.\",
+      \"text\": \"${subject} on hold, waiting for approval.\",
       \"blocks\": [
         {
           \"type\": \"header\",
           \"text\": {
             \"type\": \"plain_text\",
-            \"text\": \"${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH} job on hold, waiting for approval. :raised_hand:\",
+            \"text\": \"${subject} on hold, waiting for approval. :raised_hand:\",
             \"emoji\": true
           }
         },
@@ -40,7 +53,7 @@ BuildMessage() {
           \"fields\": [
             {
               \"type\": \"mrkdwn\",
-              \"text\": \"<${I_PLAN_LOG_URL}|Terraform Plan Log>\"
+              \"text\": \"<${I_PLAN_LOG_URL}|${link_text}>\"
             },
             {
               \"type\": \"mrkdwn\",
