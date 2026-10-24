@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# script/ci-promote-gate — the CI `gate` job's decision.
+# script/ci-promote-gate — the CI `gate` job's decision. main runs test ->
+# publish -> gate; only a promote request continues past it.
 #
 # Reads the HEAD commit *subject* for `Promote to: patch|minor|major` (the
 # same regex as teak/sdk-utils' tag-promote; subject only) and, when the

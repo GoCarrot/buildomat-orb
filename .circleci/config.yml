@@ -1,9 +1,6 @@
 version: 2.1
 
-# Setup workflow (dynamic config). `ci` always runs `test`; on main it also
-# publishes, then `gate` decides from the commit subject whether to continue
-# into .circleci/promote.yml (notify + approval hold + promote). A plain merge
-# ends green after `gate` with no hold.
+# Setup workflow: see script/ci-promote-gate and promote.yml.
 setup: true
 
 orbs:
@@ -64,8 +61,6 @@ jobs:
           name: Publish dev:alpha
           command: rake publish
 
-  # Reads the commit subject. No `Promote to:` -> halts green. A valid bump ->
-  # checks the CHANGELOG up front and continues into promote.yml.
   gate:
     docker:
       - image: cimg/ruby:3.3.9

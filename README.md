@@ -144,6 +144,9 @@ push to `main` then runs `test` -> `publish` -> `gate`:
 * `promote` runs once `hold` is approved: `rake promote:<bump>[<sha>]`,
   promoting that commit's `dev:<sha>`.
 
+Setup workflows can't be rerun, so a red `gate` (say, the CHANGELOG isn't
+ready) is fixed forward: push a new commit with `Promote to:` in its subject.
+
 Consumers float on `@0.1`, so a promote is a fleet-wide release. Before
 asking for one, add the `CHANGELOG.md` entry titled with exactly the version the
 bump will publish (0.1.12 + `patch` = `## 0.1.13`). `gate` fails before the
