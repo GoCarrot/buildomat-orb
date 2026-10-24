@@ -57,6 +57,14 @@ parameters:
     description: "Comma separated list of var_files to load to set, e.g. 'dev.tfvars'"
     type: string
 
+  continuation_cache_key:
+    type: string
+    description: >
+      Cache key the planfile is saved under when continuation is true. Repos
+      planning several roots in one workflow need a distinct key per root,
+      since cache keys are immutable and the first save wins.
+    default: "{{ .Environment.CIRCLE_WORKFLOW_ID }}"
+
   lock:
     type: boolean
     description: >
@@ -102,7 +110,7 @@ steps:
               I_CONTINUATION_PARAMETERS: << parameters.continuation_parameters >>
             command: << include(scripts/terraform_plan_continuation.sh) >>
         - save_cache:
-            key: "{{ .Environment.CIRCLE_WORKFLOW_ID }}"
+            key: << parameters.continuation_cache_key >>
             paths:
               - << parameters.out_path >>/<< parameters.out_plan >>
   - store_artifacts:
