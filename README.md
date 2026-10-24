@@ -127,8 +127,41 @@ workflows:
 
 Development requires that you have the circleci CLI installed. `brew install circleci`
 
-### Deployment
+### Publishing
+
+CI publishes. Every push runs `test`. A push to `main` then runs `test` ->
+`publish` -> `hold` -> `promote`:
+
+* `publish` pushes the commit to `teak/buildomat@dev:<sha>` and `dev:alpha`.
+* `hold` is a manual approval in CircleCI. Nothing ships without it.
+* `promote` reads the commit **subject** (not the body) for
+  `Promote to: patch|minor|major` and runs `rake promote:<bump>[<sha>]`,
+  promoting that commit's `dev:<sha>`. No marker means it ends green and
+  publishes nothing; an unknown value (`Promote to: 0.2.0`) fails.
+
+Consumers float on `@0.1`, so a promote is a fleet-wide release. Before
+asking for one, add the `CHANGELOG.md` entry titled with exactly the version the
+bump will publish (0.1.12 + `patch` = `## 0.1.13`). The gate fails the job
+before publishing if it isn't.
+
+A default "Merge pull request #N" commit never carries the marker; its subject
+is the merge boilerplate. To ask for a promote, do one of:
+
+* edit the merge-commit title in GitHub's merge dialog to `Promote to: patch`
+* squash-merge with the PR title `Promote to: patch`
+* push a commit to `main` whose subject is `Promote to: patch`
+
+`publish` and `promote` run in the `CircleCI` context, whose
+`CIRCLE_API_TOKEN` is the API token for the orb CLI. That token has to be
+allowed to publish `teak/buildomat`.
+
+#### Break-glass
+
+From a laptop with `circleci setup` done:
 
 `rake validate` to validate the orb
-`rake publish` to make the orb available with the dev:alpha label
-`rake promote:(major|minor|patch)` to publish the `dev:alpha` orb bumping the given version number.
+`rake publish` to make the orb available with the dev:alpha label (`rake publish[label]` for `dev:label`)
+`rake promote:(major|minor|patch)` to publish the `dev:alpha` orb bumping the given version number (`rake promote:patch[label]` for `dev:label`).
+
+Note `dev:alpha` is shared: a CI publish or someone else's branch publish may
+have replaced what you pushed. Check before you promote it.

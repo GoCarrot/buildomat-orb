@@ -14,10 +14,15 @@ This is the Buildomat CircleCI Orb - a custom CircleCI orb that provides reusabl
 - `rake test` - Run both validation and shellcheck
 
 ### Publishing
+CI is the default path (`.circleci/config.yml`). Every push runs `test`; on `main`, `test` -> `publish` (to `dev:<sha>` and `dev:alpha`) -> `hold` (approval) -> `promote`. `promote` runs `script/ci-promote`, which reads the commit *subject* for `Promote to: patch|minor|major`; no marker means it ends green without publishing. A default merge-commit subject has no marker, so set one by editing the merge title, squash-merging with it as the PR title, or pushing a commit with that subject. See README "Publishing".
+
+Break-glass, from a laptop (the `[label]` arg picks `dev:<label>`, default `alpha`):
 - `rake publish` - Publish the orb with dev:alpha label for testing
 - `rake promote:patch` - Promote dev:alpha to production with patch version bump
-- `rake promote:minor` - Promote dev:alpha to production with minor version bump  
+- `rake promote:minor` - Promote dev:alpha to production with minor version bump
 - `rake promote:major` - Promote dev:alpha to production with major version bump
+
+The CHANGELOG gate requires the top entry to be exactly the version the bump will publish.
 
 ### Development Helpers
 - `rake dev:parameter_template` - Generate CircleCI environment blocks for parameters

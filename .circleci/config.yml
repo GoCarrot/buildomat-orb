@@ -3,13 +3,31 @@ version: 2.1
 orbs:
   circleci-cli: circleci/circleci-cli@0.1.11
 
+commands:
+  # The Rakefile parses `circleci` output (ChangelogGate.parse_promoted_version,
+  # registry_version) and is pinned to this version. The orb's default,
+  # `latest`, is 1.x, which reads CIRCLE_TOKEN, not CIRCLECI_CLI_TOKEN. Bump
+  # this with those parsers.
+  install-cli:
+    steps:
+      - circleci-cli/install:
+          version: v0.1.33494
+
+  authenticated-cli:
+    description: Checkout plus a circleci CLI logged in with CIRCLE_API_TOKEN from the job's context.
+    steps:
+      - checkout
+      - install-cli
+      - circleci-cli/setup:
+          token: CIRCLE_API_TOKEN
+
 jobs:
   test:
     docker:
       - image: cimg/ruby:3.3.9
     steps:
       - checkout
-      - circleci-cli/install
+      - install-cli
       - run:
           name: Install shellcheck
           command: |
@@ -22,7 +40,53 @@ jobs:
           name: Run test suite
           command: rake test
 
+  # Publishes this commit as dev:<sha> (what `promote` ships) and as
+  # dev:alpha (for trying the orb from other projects). Promote reads the
+  # sha label, so a later merge or a laptop `rake publish` moving dev:alpha
+  # can't change what an approval ships.
+  publish:
+    docker:
+      - image: cimg/ruby:3.3.9
+    steps:
+      - authenticated-cli
+      - run:
+          name: Publish dev:<sha>
+          command: rake "publish[${CIRCLE_SHA1}]"
+      - run:
+          name: Publish dev:alpha
+          command: rake publish
+
+  promote:
+    docker:
+      - image: cimg/ruby:3.3.9
+    steps:
+      - authenticated-cli
+      - run:
+          name: Promote if the commit subject asks for a bump
+          command: script/ci-promote
+
 workflows:
-  test:
+  ci:
     jobs:
       - test
+      - publish:
+          context: CircleCI
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - hold:
+          type: approval
+          requires:
+            - publish
+          filters:
+            branches:
+              only: main
+      - promote:
+          context: CircleCI
+          requires:
+            - hold
+          filters:
+            branches:
+              only: main

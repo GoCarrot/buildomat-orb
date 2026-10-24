@@ -46,16 +46,16 @@ def fail_loudly(message)
   exit 1
 end
 
-# Pre-check: catches "forgot the entry" / "entry is stale" before anything
-# ships.
-def ensure_changelog_has_a_pending_entry!
+# Pre-check: catches "forgot the entry" / "entry is stale" / "entry is for a
+# different bump" before anything ships.
+def ensure_changelog_documents_next_version!(bump)
   published = registry_version
-  return if ChangelogGate.documents_newer_than?(changelog_text, published)
+  return if ChangelogGate.documents_next_version?(changelog_text, published, bump)
 
   fail_loudly(<<~MSG)
-    CHANGELOG.md's top entry (###{ChangelogGate.top_version(changelog_text)}) is not newer than
-    #{ORGANIZATION}/#{ORB_NAME}@#{published}, which is already published.
-    Add a CHANGELOG.md entry for the version you're about to promote before running rake promote:*.
+    CHANGELOG.md's top entry (###{ChangelogGate.top_version(changelog_text)}) is not the version a #{bump} promote will publish
+    (#{ChangelogGate.next_version(published, bump)}, after #{ORGANIZATION}/#{ORB_NAME}@#{published}).
+    Add or retitle the CHANGELOG.md entry before promoting.
   MSG
 end
 
@@ -74,7 +74,7 @@ def ensure_changelog_matches_published_version!(promote_output)
 end
 
 def promote(label:, version:)
-  ensure_changelog_has_a_pending_entry!
+  ensure_changelog_documents_next_version!(version)
 
   output, status = Open3.capture2e("circleci orb publish promote #{ORGANIZATION}/#{ORB_NAME}@#{label} #{version}")
   puts output
@@ -103,19 +103,21 @@ end
 desc 'Validate the orb, run shellcheck on all scripts, and run the Ruby unit tests'
 task :test => [:validate, :shellcheck, :spec]
 
-desc 'Publish the orb to the dev:alpha tag'
-task :publish do
+desc 'Publish the orb to a dev label (rake publish[label]; default alpha)'
+task :publish, [:label] do |_t, args|
+  args.with_defaults(label: 'alpha')
   with_packed_orb do |orbfile|
-    sh "circleci orb publish #{orbfile} #{ORGANIZATION}/#{ORB_NAME}@dev:alpha", verbose: false
+    sh "circleci orb publish #{orbfile} #{ORGANIZATION}/#{ORB_NAME}@dev:#{args.label}", verbose: false
   end
 end
 
-desc 'Promote the version at dev:alpha to production and bump the patch release'
+desc 'Promote a dev label (default alpha) to production, bumping patch/minor/major'
 namespace :promote do
   %w[patch minor major].each do |version|
-    desc "Promote dev:alpha to production and bump the #{version} in version"
-    task version.to_sym do
-      promote(label: 'dev:alpha', version: version)
+    desc "Promote dev:<label> (default alpha) to production and bump the #{version} in version"
+    task version.to_sym, [:label] do |_t, args|
+      args.with_defaults(label: 'alpha')
+      promote(label: "dev:#{args.label}", version: version)
     end
   end
 
