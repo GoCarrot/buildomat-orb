@@ -3,6 +3,17 @@ version: 2.1
 orbs:
   circleci-cli: circleci/circleci-cli@0.1.11
 
+# Branches run `test`. main runs test -> publish -> hold -> promote.
+# See "Publishing" in README.md.
+
+commands:
+  authenticated-cli:
+    description: Checkout plus a circleci CLI logged in with CIRCLECI_CLI_TOKEN from the job's context.
+    steps:
+      - checkout
+      - circleci-cli/install
+      - circleci-cli/setup
+
 jobs:
   test:
     docker:
@@ -22,7 +33,54 @@ jobs:
           name: Run test suite
           command: rake test
 
+  # Publishes this commit as dev:<sha> (what `promote` ships) and as
+  # dev:alpha (for trying the orb from other projects). Promote reads the
+  # sha label, so a later merge or a laptop `rake publish` moving dev:alpha
+  # can't change what an approval ships.
+  publish:
+    docker:
+      - image: cimg/ruby:3.3.9
+    steps:
+      - authenticated-cli
+      - run:
+          name: Publish dev:<sha>
+          command: rake "publish[${CIRCLE_SHA1}]"
+      - run:
+          name: Publish dev:alpha
+          command: rake publish
+
+  promote:
+    docker:
+      - image: cimg/ruby:3.3.9
+    steps:
+      - authenticated-cli
+      - run:
+          name: Promote if the commit subject asks for a bump
+          command: script/ci-promote
+
 workflows:
-  test:
+  ci:
     jobs:
       - test
+      - publish:
+          # TODO: placeholder; swap for the real context name before merge.
+          context: buildomat-orb-publish
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
+      - hold:
+          type: approval
+          requires:
+            - publish
+          filters:
+            branches:
+              only: main
+      - promote:
+          context: buildomat-orb-publish
+          requires:
+            - hold
+          filters:
+            branches:
+              only: main
