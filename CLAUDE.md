@@ -9,7 +9,7 @@ This is the Buildomat CircleCI Orb - a custom CircleCI orb that provides reusabl
 ## Development Commands
 
 ### Validation and Testing
-- `rake validate` - Validate the orb structure
+- `rake validate` - Validate the orb structure and the repo's own `.circleci` configs
 - `rake shellcheck` - Run shellcheck on all scripts in src/scripts/
 - `rake test` - Run both validation and shellcheck
 

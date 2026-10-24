@@ -82,10 +82,13 @@ def promote(label:, version:)
   ensure_changelog_matches_published_version!(output)
 end
 
-desc 'Validate the orb'
+desc 'Validate the orb and the repo\'s own CircleCI configs'
 task :validate do
   with_packed_orb do |orbfile|
     sh "circleci orb validate #{orbfile}", verbose: false
+  end
+  Dir['.circleci/*.yml'].sort.each do |config|
+    sh "circleci config validate #{config}", verbose: false
   end
 end
 
