@@ -45,12 +45,12 @@ RSpec.describe 'terraform_slack_on_hold_message.sh (behavioral)' do
     end
   end
 
-  it 'names the root and links the plan job when a root is given' do
+  it 'names the root and links the plan log when a root is given' do
     json = message(root: 'production')
 
     expect(json['text']).to eq('arboretum main: production apply on hold, waiting for approval.')
     expect(json['blocks'][0]['text']['text']).to start_with('arboretum main: production apply on hold')
-    expect(json['blocks'][1]['fields'][0]['text']).to eq('<https://example.test/plan|Terraform Plan Job (production)>')
+    expect(json['blocks'][1]['fields'][0]['text']).to eq('<https://example.test/plan|Terraform Plan Log>')
   end
 
   it 'is the original single-root message when no root is given' do

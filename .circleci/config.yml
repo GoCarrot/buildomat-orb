@@ -1,13 +1,18 @@
 version: 2.1
 
+# Setup workflow: see script/ci-promote-gate and promote.yml.
+setup: true
+
 orbs:
   circleci-cli: circleci/circleci-cli@0.1.11
+  continuation: circleci/continuation@1
 
 commands:
   # The Rakefile parses `circleci` output (ChangelogGate.parse_promoted_version,
   # registry_version) and is pinned to this version. The orb's default,
   # `latest`, is 1.x, which reads CIRCLE_TOKEN, not CIRCLECI_CLI_TOKEN. Bump
-  # this with those parsers.
+  # this with those parsers, and with the copy in promote.yml (a spec checks
+  # they match).
   install-cli:
     steps:
       - circleci-cli/install:
@@ -56,14 +61,23 @@ jobs:
           name: Publish dev:alpha
           command: rake publish
 
-  promote:
+  gate:
     docker:
       - image: cimg/ruby:3.3.9
     steps:
       - authenticated-cli
       - run:
-          name: Promote if the commit subject asks for a bump
-          command: script/ci-promote
+          name: Decide whether the commit subject asks for a promote
+          command: script/ci-promote-gate
+      - run:
+          name: Stop unless promoting
+          command: |
+            if [ ! -f /tmp/promote-params.json ]; then
+              circleci-agent step halt
+            fi
+      - continuation/continue:
+          configuration_path: .circleci/promote.yml
+          parameters: /tmp/promote-params.json
 
 workflows:
   ci:
@@ -76,17 +90,10 @@ workflows:
           filters:
             branches:
               only: main
-      - hold:
-          type: approval
-          requires:
-            - publish
-          filters:
-            branches:
-              only: main
-      - promote:
+      - gate:
           context: CircleCI
           requires:
-            - hold
+            - publish
           filters:
             branches:
               only: main

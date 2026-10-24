@@ -54,7 +54,7 @@ ContextsYaml() {
 }
 
 GenerateMultiRootContinue() {
-  local contexts slack_contexts jobs root changed cache_id plan_job_url
+  local contexts slack_contexts jobs root changed cache_id plan_log_url
   contexts=$(ContextsYaml "${I_CONTEXTS}")
   slack_contexts=$(ContextsYaml "${I_SLACK_CONTEXTS}")
   jobs=""
@@ -84,9 +84,9 @@ GenerateMultiRootContinue() {
       exit 1
     fi
     if [[ -n "${I_SLACK_CONTEXTS}" ]]; then
-      plan_job_url=$(cat "${I_PLAN_BASE}/${root}/plan_job_url" 2>/dev/null || true)
-      if [[ -z "${plan_job_url}" ]]; then
-        echo "${root} has changes but no plan_job_url to link in Slack" >&2
+      plan_log_url=$(jq -r '."plan-log-url" // empty' "${I_PLAN_BASE}/${root}/continue_params.json")
+      if [[ -z "${plan_log_url}" ]]; then
+        echo "${root} has changes but no plan-log-url in continue_params.json to link in Slack" >&2
         exit 1
       fi
       jobs="${jobs}
@@ -94,7 +94,7 @@ GenerateMultiRootContinue() {
           name: \"Notify hold (${root})\"
           context: ${slack_contexts}
           root: \"${root}\"
-          plan-log-url: \"${plan_job_url}\""
+          plan-log-url: \"${plan_log_url}\""
     fi
 
     echo "${root}: has changes"

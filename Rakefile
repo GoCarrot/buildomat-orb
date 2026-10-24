@@ -50,7 +50,7 @@ end
 # different bump" before anything ships.
 def ensure_changelog_documents_next_version!(bump)
   published = registry_version
-  return if ChangelogGate.documents_next_version?(changelog_text, published, bump)
+  return ChangelogGate.next_version(published, bump) if ChangelogGate.documents_next_version?(changelog_text, published, bump)
 
   fail_loudly(<<~MSG)
     CHANGELOG.md's top entry (###{ChangelogGate.top_version(changelog_text)}) is not the version a #{bump} promote will publish
@@ -83,10 +83,13 @@ def promote(label:, version:)
   ensure_changelog_matches_published_version!(output)
 end
 
-desc 'Validate the orb'
+desc 'Validate the orb and the repo\'s own CircleCI configs'
 task :validate do
   with_packed_orb do |orbfile|
     sh "circleci orb validate #{orbfile}", verbose: false
+  end
+  Dir['.circleci/*.yml'].sort.each do |config|
+    sh "circleci config validate #{config}", verbose: false
   end
 end
 
@@ -113,6 +116,11 @@ end
 
 desc 'Promote a dev label (default alpha) to production, bumping patch/minor/major'
 namespace :promote do
+  desc 'Fail unless CHANGELOG.md documents the version a bump will publish; print that version'
+  task :preflight, [:bump] do |_t, args|
+    puts ensure_changelog_documents_next_version!(args.fetch(:bump))
+  end
+
   %w[patch minor major].each do |version|
     desc "Promote dev:<label> (default alpha) to production and bump the #{version} in version"
     task version.to_sym, [:label] do |_t, args|

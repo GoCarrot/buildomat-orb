@@ -129,20 +129,28 @@ Development requires that you have the circleci CLI installed. `brew install cir
 
 ### Publishing
 
-CI publishes. Every push runs `test`. A push to `main` then runs `test` ->
-`publish` -> `hold` -> `promote`:
+CI publishes, as a setup workflow (dynamic config). Every push runs `test`. A
+push to `main` then runs `test` -> `publish` -> `gate`:
 
 * `publish` pushes the commit to `teak/buildomat@dev:<sha>` and `dev:alpha`.
-* `hold` is a manual approval in CircleCI. Nothing ships without it.
-* `promote` reads the commit **subject** (not the body) for
-  `Promote to: patch|minor|major` and runs `rake promote:<bump>[<sha>]`,
-  promoting that commit's `dev:<sha>`. No marker means it ends green and
-  publishes nothing; an unknown value (`Promote to: 0.2.0`) fails.
+* `gate` reads the commit **subject** (not the body) for
+  `Promote to: patch|minor|major`. No marker: the workflow ends green, with no
+  hold. An unknown value (`Promote to: 0.2.0`) fails. A valid bump first checks
+  that `CHANGELOG.md` is ready (below), then continues into
+  `.circleci/promote.yml`.
+* In that pipeline, `notify` posts to Slack (orb version, bump, link to the
+  workflow) alongside `hold`, a manual approval in CircleCI. Nothing waits on
+  `notify`, so a Slack failure can't block approval.
+* `promote` runs once `hold` is approved: `rake promote:<bump>[<sha>]`,
+  promoting that commit's `dev:<sha>`.
+
+Setup workflows can't be rerun, so a red `gate` (say, the CHANGELOG isn't
+ready) is fixed forward: push a new commit with `Promote to:` in its subject.
 
 Consumers float on `@0.1`, so a promote is a fleet-wide release. Before
 asking for one, add the `CHANGELOG.md` entry titled with exactly the version the
-bump will publish (0.1.12 + `patch` = `## 0.1.13`). The gate fails the job
-before publishing if it isn't.
+bump will publish (0.1.12 + `patch` = `## 0.1.13`). `gate` fails before the
+hold if it isn't, and `promote` checks again before publishing.
 
 A default "Merge pull request #N" commit never carries the marker; its subject
 is the merge boilerplate. To ask for a promote, do one of:
@@ -151,9 +159,12 @@ is the merge boilerplate. To ask for a promote, do one of:
 * squash-merge with the PR title `Promote to: patch`
 * push a commit to `main` whose subject is `Promote to: patch`
 
-`publish` and `promote` run in the `CircleCI` context, whose
+`publish`, `gate` and `promote` run in the `CircleCI` context, whose
 `CIRCLE_API_TOKEN` is the API token for the orb CLI. That token has to be
-allowed to publish `teak/buildomat`.
+allowed to publish `teak/buildomat`. `notify` runs in the `Slack` context
+(`SLACK_ACCESS_TOKEN`, `SLACK_DEFAULT_CHANNEL`). The `circleci` CLI pin is
+duplicated in `.circleci/config.yml` and `.circleci/promote.yml`; a spec checks
+they match.
 
 #### Break-glass
 

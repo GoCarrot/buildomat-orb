@@ -38,24 +38,23 @@ RSpec.describe 'terraform_plan_continuation.sh GenerateContinuation (behavioral)
       'ENVIRONMENT_ACTIVE' => 'true',
       'CIRCLE_WORKFLOW_ID' => 'wf-1',
       'CIRCLE_WORKFLOW_JOB_ID' => 'job-1',
-      'CIRCLE_NODE_INDEX' => '0',
-      'CIRCLE_BUILD_URL' => 'https://circleci.com/gh/GoCarrot/arboretum/42'
+      'CIRCLE_NODE_INDEX' => '0'
     }
     result = ScriptHarness.source('terraform_plan_continuation.sh', 'GenerateContinuation', env: env)
     raise "failed: #{result.stderr}" unless result.status.success?
   end
 
-  it 'records the plan job url, outside continue_params.json, when the plan has changes' do
+  it 'links the plan log artifact in continue_params.json when the plan has changes' do
     generate(changes: true)
 
-    expect(File.read(File.join(@out_path, 'plan_job_url')).strip).to eq('https://circleci.com/gh/GoCarrot/arboretum/42')
     params = JSON.parse(File.read(File.join(@out_path, 'continue_params.json')))
+    expect(params['plan-log-url']).to eq("https://output.circle-artifacts.com/output/job/job-1/artifacts/0#{@out_path}/plan.log")
     expect(params.keys).to match_array(%w[run-apply environment-active continuation-cache-id workspace plan-log-url])
   end
 
   it 'records nothing when the plan has no changes' do
     generate(changes: false)
 
-    expect(File.exist?(File.join(@out_path, 'plan_job_url'))).to be(false)
+    expect(JSON.parse(File.read(File.join(@out_path, 'continue_params.json')))).not_to have_key('plan-log-url')
   end
 end
