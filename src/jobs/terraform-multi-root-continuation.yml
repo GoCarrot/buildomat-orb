@@ -14,7 +14,7 @@
 
 description: >
   Fan-in after one terraform-plan job per root (continuation: true). Holds and
-  applies (with an optional Slack notification before each hold) only the
+  applies (with an optional Slack notification alongside each hold) only the
   roots whose plans have changes; when none do, ends green
   without continuing.
 
@@ -41,8 +41,8 @@ parameters:
     description: >
       Contexts (comma separated) for the generated terraform-slack-on-hold jobs,
       e.g. the one that sets SLACK_ACCESS_TOKEN and SLACK_DEFAULT_CHANNEL. When
-      set, each changed root gets a Slack notification its approval hold waits
-      on. Empty (default) means no Slack jobs.
+      set, each changed root gets a Slack notification that runs alongside its
+      approval hold. Empty (default) means no Slack jobs.
   continuation_configuration_path:
     type: string
     default: ".circleci/continue.yml"

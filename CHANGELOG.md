@@ -4,8 +4,8 @@ ENHANCEMENTS:
 
 * `terraform-multi-root-continuation` job (and `generate-multi-root-continue`
   command): new `slack_contexts` param. When set, each root with changes gets a
-  `terraform-slack-on-hold` job, run with just those contexts, that its
-  approval hold waits on. Empty (default) keeps today's output. Roots with no
+  `terraform-slack-on-hold` job, run with just those contexts, that runs
+  alongside its approval hold (the hold doesn't wait on it). Empty (default) keeps today's output. Roots with no
   changes still get nothing, so a run with no changes posts nothing.
 * `terraform-slack-on-hold` job / `terraform-slack-on-hold-message` command:
   new `root` param. When set, the message names the root and links the plan job

@@ -131,7 +131,7 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
   end
 
   describe 'with slack_contexts' do
-    it 'notifies, then holds, then applies only the changed root' do
+    it 'notifies alongside the hold, then applies only the changed root' do
       plan('meta', changes: false)
       plan('production', changes: true)
 
@@ -147,7 +147,8 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
         'root' => 'production',
         'plan-log-url' => 'https://circleci.com/gh/GoCarrot/arboretum/1'
       )
-      expect(hold['hold']['requires']).to eq(['Notify hold (production)'])
+      expect(hold['hold']).not_to have_key('requires')
+      expect(notify['buildomat/terraform-slack-on-hold']).not_to have_key('requires')
       expect(apply['buildomat/terraform-apply']['requires']).to eq(['Approve apply (production)'])
     end
 

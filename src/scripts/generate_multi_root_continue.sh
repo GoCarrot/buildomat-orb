@@ -18,7 +18,7 @@
 # planned by its own terraform-plan job (out_path <plan base>/<root>). Every
 # root whose plan has changes gets an approval hold and an apply of exactly
 # that root's planfile, and, if I_SLACK_CONTEXTS is set, a Slack notification
-# the hold waits on. Roots with no changes get nothing. If no root changed,
+# that runs alongside the hold, not before it. Roots with no changes get nothing. If no root changed,
 # no config is written, and the caller skips the continuation.
 
 SetupEnv() {
@@ -54,7 +54,7 @@ ContextsYaml() {
 }
 
 GenerateMultiRootContinue() {
-  local contexts slack_contexts jobs root changed cache_id plan_job_url hold_requires
+  local contexts slack_contexts jobs root changed cache_id plan_job_url
   contexts=$(ContextsYaml "${I_CONTEXTS}")
   slack_contexts=$(ContextsYaml "${I_SLACK_CONTEXTS}")
   jobs=""
@@ -83,7 +83,6 @@ GenerateMultiRootContinue() {
       echo "${root} has changes but no continuation-cache-id in continue_params.json" >&2
       exit 1
     fi
-    hold_requires=""
     if [[ -n "${I_SLACK_CONTEXTS}" ]]; then
       plan_job_url=$(cat "${I_PLAN_BASE}/${root}/plan_job_url" 2>/dev/null || true)
       if [[ -z "${plan_job_url}" ]]; then
@@ -96,9 +95,6 @@ GenerateMultiRootContinue() {
           context: ${slack_contexts}
           root: \"${root}\"
           plan-log-url: \"${plan_job_url}\""
-      hold_requires="
-          requires:
-            - \"Notify hold (${root})\""
     fi
 
     echo "${root}: has changes"
@@ -106,7 +102,7 @@ GenerateMultiRootContinue() {
     jobs="${jobs}
       - hold:
           name: \"Approve apply (${root})\"
-          type: approval${hold_requires}
+          type: approval
       - buildomat/terraform-apply:
           name: \"Apply (${root})\"
           context: ${contexts}

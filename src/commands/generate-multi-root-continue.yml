@@ -14,8 +14,8 @@
 
 description: >
   Writes a continuation config for a repo with several terraform roots: one
-  approval hold + apply per root whose plan has changes (preceded by a Slack
-  notification the hold waits on, if slack_contexts is set). Writes nothing
+  approval hold + apply per root whose plan has changes (plus a Slack
+  notification alongside the hold, if slack_contexts is set). Writes nothing
   when no root changed. Expects each root's terraform-plan to have used
   out_path <plan_base>/<root>, continuation_cache_key
   "{{ .Environment.CIRCLE_WORKFLOW_ID }}-<root>-plan", and a workspace attached at
@@ -41,8 +41,8 @@ parameters:
     description: >
       Contexts (comma separated) for the generated terraform-slack-on-hold jobs,
       e.g. the one that sets SLACK_ACCESS_TOKEN and SLACK_DEFAULT_CHANNEL. When
-      set, each changed root gets a Slack notification its approval hold waits
-      on. Empty (default) means no Slack jobs.
+      set, each changed root gets a Slack notification that runs alongside its
+      approval hold. Empty (default) means no Slack jobs.
   out_path:
     type: string
     default: ".circleci/continue.yml"
