@@ -11,9 +11,7 @@ ENHANCEMENTS:
   new `root` param. When set, the message names the root and links the plan job
   instead of a plan log. Unset, the message is unchanged.
 * `terraform-plan` with `continuation: true` writes a `plan_job_url` file next
-  to `continue_params.json` when the plan has changes. Not in
-  `continue_params.json`: the single-root continuation rejects keys it doesn't
-  declare.
+  to `continue_params.json` when the plan has changes.
 
 ## 0.1.12
 

@@ -16,12 +16,15 @@
 
 require_relative '../lib/script_harness'
 require 'tmpdir'
+require 'fileutils'
 require 'json'
 
 RSpec.describe 'terraform_slack_on_hold_message.sh (behavioral)' do
   def message(root:, url: 'https://example.test/plan')
     Dir.mktmpdir('slack-hold') do |dir|
       bash_env = File.join(dir, 'bash_env')
+      # BuildMessage writes a fixed path; don't read another run's template.
+      FileUtils.rm_f('/tmp/teak-orb/tf-plan-slack-template.json')
       env = {
         'HOME' => dir,
         'BASH_ENV' => bash_env,

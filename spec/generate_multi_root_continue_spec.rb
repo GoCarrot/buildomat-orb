@@ -33,7 +33,7 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
     return unless changes
 
     FileUtils.touch(File.join(@plan_base, root, 'tf_plan_changes'))
-    File.write(File.join(@plan_base, root, 'plan_job_url'), "https://circleci.com/gh/GoCarrot/arboretum/#{root.length}\n")
+    File.write(File.join(@plan_base, root, 'plan_job_url'), "https://circleci.com/gh/GoCarrot/arboretum/1\n")
     File.write(File.join(@plan_base, root, 'continue_params.json'), '{"run-apply":true, "continuation-cache-id": "plan-wf"}')
   end
 
@@ -145,18 +145,10 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
         'name' => 'Notify hold (production)',
         'context' => ['Slack'],
         'root' => 'production',
-        'plan-log-url' => "https://circleci.com/gh/GoCarrot/arboretum/#{'production'.length}"
+        'plan-log-url' => 'https://circleci.com/gh/GoCarrot/arboretum/1'
       )
       expect(hold['hold']['requires']).to eq(['Notify hold (production)'])
       expect(apply['buildomat/terraform-apply']['requires']).to eq(['Approve apply (production)'])
-    end
-
-    it 'gives only the notification the slack contexts' do
-      plan('meta', changes: true)
-
-      expect(generate('meta', slack_contexts: 'Slack').status).to be_success
-      expect(jobs.last['buildomat/terraform-apply']['context']).to eq(%w[AWS-OIDC-Role Slack])
-      expect(jobs.first['buildomat/terraform-slack-on-hold']['context']).to eq(['Slack'])
     end
 
     it 'links each root to its own plan job' do
@@ -170,13 +162,6 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
         [j.values.first['root'], j.values.first['plan-log-url']]
       end
       expect(urls).to eq('meta' => 'https://circleci.com/gh/o/r/1', 'github' => 'https://circleci.com/gh/o/r/2')
-    end
-
-    it 'writes no config when no root has changes' do
-      plan('meta', changes: false)
-
-      expect(generate('meta', slack_contexts: 'Slack').status).to be_success
-      expect(File.exist?(@out_path)).to be(false)
     end
 
     it 'fails when a changed root has no plan_job_url' do

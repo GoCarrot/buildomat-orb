@@ -25,8 +25,6 @@ SetupEnv() {
 }
 
 BuildMessage() {
-  # With a root (multi-root repos), name it and link the plan job page rather
-  # than a plan log file.
   local subject="${CIRCLE_PROJECT_REPONAME} ${CIRCLE_BRANCH}"
   local link_text="Terraform Plan Log"
   if [[ -n "${I_ROOT}" ]]; then
