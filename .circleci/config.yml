@@ -18,6 +18,11 @@ jobs:
   test:
     docker:
       - image: cimg/ruby:3.3.9
+    environment:
+      # `circleci orb validate` refuses to run without a token, but validating
+      # a public-orb-only orb works with any value, so branch builds get a
+      # placeholder rather than a publish-capable secret.
+      CIRCLECI_CLI_TOKEN: placeholder-validate-needs-a-value
     steps:
       - checkout
       - circleci-cli/install
