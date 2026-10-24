@@ -1,0 +1,62 @@
+# Copyright 2026 Teak.io, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+description: >
+  Fan-in after one terraform-plan job per root (continuation: true). Holds and
+  applies only the roots whose plans have changes; when none do, ends green
+  without continuing.
+
+docker:
+  - image: cimg/base:stable
+
+parameters:
+  roots:
+    type: string
+    description: "Terraform roots (comma or newline separated), as paths relative to the repo root."
+  plan_base:
+    type: string
+    default: "/tmp/teak-orb-terraform"
+    description: "Workspace root the plan jobs persisted from (their persist_root)."
+  terraform_version:
+    type: string
+  contexts:
+    type: string
+    default: ""
+    description: "Contexts (comma separated) attached to the generated apply jobs."
+  continuation_configuration_path:
+    type: string
+    default: ".circleci/continue.yml"
+  orb:
+    type: string
+    description: "The fully qualified buildomat orb you are using, e.g. \"teak/buildomat@0.1\""
+
+steps:
+  - checkout
+  - attach_workspace:
+      at: << parameters.plan_base >>
+  - generate-multi-root-continue:
+      roots: << parameters.roots >>
+      plan_base: << parameters.plan_base >>
+      terraform_version: << parameters.terraform_version >>
+      contexts: << parameters.contexts >>
+      out_path: << parameters.continuation_configuration_path >>
+      orb: << parameters.orb >>
+  - run:
+      name: "Stop if no root has changes"
+      command: |
+        if [ ! -f "<< parameters.continuation_configuration_path >>" ]; then
+          circleci-agent step halt
+        fi
+  - continuation/continue:
+      configuration_path: << parameters.continuation_configuration_path >>

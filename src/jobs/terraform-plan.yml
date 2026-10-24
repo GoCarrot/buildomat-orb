@@ -96,6 +96,30 @@ parameters:
     description: "Comma separated list of var_files to load to set, e.g. 'dev.tfvars'"
     type: string
 
+  continuation_cache_key:
+    type: string
+    description: >
+      Cache key the planfile is saved under when continuation is true. Repos
+      planning several roots in one workflow need a distinct key per root.
+    default: "{{ .Environment.CIRCLE_WORKFLOW_ID }}"
+
+  persist_root:
+    type: string
+    description: >
+      Workspace root to persist from. Defaults to out_path. Set to a parent of
+      out_path when several plan jobs share a workflow, so each keeps its own
+      subdirectory in the workspace instead of overwriting the others' files.
+    default: ""
+
+  store_plan_artifact:
+    type: boolean
+    description: >
+      Store the planfile as a job artifact. A planfile holds prior state and
+      data-source results in plaintext (e.g. decrypted aws_kms_secrets), and
+      artifacts are downloadable by anyone with project read. Set false for
+      roots that read secrets. The continuation cache still gets the planfile.
+    default: true
+
   lock:
     type: boolean
     description: >
@@ -128,8 +152,20 @@ steps:
       var_file: << parameters.var_file >>
       continuation: << parameters.continuation >>
       continuation_parameters: << parameters.continuation_parameters >>
+      continuation_cache_key: << parameters.continuation_cache_key >>
+      store_plan_artifact: << parameters.store_plan_artifact >>
       lock: << parameters.lock >>
-  - persist_to_workspace:
-      root: << parameters.out_path >>
-      paths:
-        - "*"
+  - unless:
+      condition: << parameters.persist_root >>
+      steps:
+        - persist_to_workspace:
+            root: << parameters.out_path >>
+            paths:
+              - "*"
+  - when:
+      condition: << parameters.persist_root >>
+      steps:
+        - persist_to_workspace:
+            root: << parameters.persist_root >>
+            paths:
+              - "*"
