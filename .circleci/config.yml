@@ -7,25 +7,29 @@ orbs:
 # See "Publishing" in README.md.
 
 commands:
+  # The Rakefile parses `circleci` output (ChangelogGate.parse_promoted_version,
+  # registry_version) and is pinned to this version. The orb's default,
+  # `latest`, is 1.x, which prints different output and reads CIRCLE_TOKEN
+  # instead of CIRCLECI_CLI_TOKEN. Bump this with those parsers.
+  install-cli:
+    steps:
+      - circleci-cli/install:
+          version: v0.1.33494
+
   authenticated-cli:
     description: Checkout plus a circleci CLI logged in with CIRCLECI_CLI_TOKEN from the job's context.
     steps:
       - checkout
-      - circleci-cli/install
+      - install-cli
       - circleci-cli/setup
 
 jobs:
   test:
     docker:
       - image: cimg/ruby:3.3.9
-    environment:
-      # `circleci orb validate` refuses to run without a token, but validating
-      # a public-orb-only orb works with any value, so branch builds get a
-      # placeholder rather than a publish-capable secret.
-      CIRCLECI_CLI_TOKEN: placeholder-validate-needs-a-value
     steps:
       - checkout
-      - circleci-cli/install
+      - install-cli
       - run:
           name: Install shellcheck
           command: |
