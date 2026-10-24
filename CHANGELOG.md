@@ -1,3 +1,20 @@
+## 0.1.13
+
+ENHANCEMENTS:
+
+* `terraform-multi-root-continuation` job (and `generate-multi-root-continue`
+  command): new `slack_contexts` param. When set, each root with changes gets a
+  `terraform-slack-on-hold` job, run with just those contexts, that its
+  approval hold waits on. Empty (default) keeps today's output. Roots with no
+  changes still get nothing, so a run with no changes posts nothing.
+* `terraform-slack-on-hold` job / `terraform-slack-on-hold-message` command:
+  new `root` param. When set, the message names the root and links the plan job
+  instead of a plan log. Unset, the message is unchanged.
+* `terraform-plan` with `continuation: true` writes a `plan_job_url` file next
+  to `continue_params.json` when the plan has changes. Not in
+  `continue_params.json`: the single-root continuation rejects keys it doesn't
+  declare.
+
 ## 0.1.12
 
 ENHANCEMENTS:

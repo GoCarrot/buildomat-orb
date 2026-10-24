@@ -14,7 +14,8 @@
 
 description: >
   Fan-in after one terraform-plan job per root (continuation: true). Holds and
-  applies only the roots whose plans have changes; when none do, ends green
+  applies (with an optional Slack notification before each hold) only the
+  roots whose plans have changes; when none do, ends green
   without continuing.
 
 docker:
@@ -34,6 +35,14 @@ parameters:
     type: string
     default: ""
     description: "Contexts (comma separated) attached to the generated apply jobs."
+  slack_contexts:
+    type: string
+    default: ""
+    description: >
+      Contexts (comma separated) for the generated terraform-slack-on-hold jobs,
+      e.g. the one that sets SLACK_ACCESS_TOKEN and SLACK_DEFAULT_CHANNEL. When
+      set, each changed root gets a Slack notification its approval hold waits
+      on. Empty (default) means no Slack jobs.
   continuation_configuration_path:
     type: string
     default: ".circleci/continue.yml"
@@ -50,6 +59,7 @@ steps:
       plan_base: << parameters.plan_base >>
       terraform_version: << parameters.terraform_version >>
       contexts: << parameters.contexts >>
+      slack_contexts: << parameters.slack_contexts >>
       out_path: << parameters.continuation_configuration_path >>
       orb: << parameters.orb >>
   - run:
