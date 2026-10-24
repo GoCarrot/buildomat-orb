@@ -17,7 +17,7 @@ description: >
   approval hold + apply per root whose plan has changes. Writes nothing when
   no root changed. Expects each root's terraform-plan to have used
   out_path <plan_base>/<root>, continuation_cache_key
-  "{{ .Environment.CIRCLE_WORKFLOW_ID }}-<root>", and a workspace attached at
+  "{{ .Environment.CIRCLE_WORKFLOW_ID }}-<root>-plan", and a workspace attached at
   plan_base.
 
 parameters:

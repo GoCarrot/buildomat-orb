@@ -30,7 +30,10 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
 
   def plan(root, changes:)
     FileUtils.mkdir_p(File.join(@plan_base, root))
-    FileUtils.touch(File.join(@plan_base, root, 'tf_plan_changes')) if changes
+    return unless changes
+
+    FileUtils.touch(File.join(@plan_base, root, 'tf_plan_changes'))
+    File.write(File.join(@plan_base, root, 'continue_params.json'), '{"run-apply":true, "continuation-cache-id": "plan-wf"}')
   end
 
   def generate(roots)
@@ -41,7 +44,8 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
       'I_CONTEXTS' => 'AWS-OIDC-Role,Slack',
       'I_OUT_PATH' => @out_path,
       'I_ORB' => 'teak/buildomat@0.1',
-      'CIRCLE_WORKFLOW_ID' => 'wf-123'
+      # A rerun-from-failed: the fan-in's workflow id differs from the plans'.
+      'CIRCLE_WORKFLOW_ID' => 'rerun-wf'
     }
     ScriptHarness.source('generate_multi_root_continue.sh', 'SetupEnv; GenerateMultiRootContinue', env: env)
   end
@@ -80,7 +84,7 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
     expect(apply['buildomat/terraform-apply']).to include(
       'path' => 'production',
       'plan_path' => "#{@plan_base}/production",
-      'continuation_cache' => 'wf-123-production',
+      'continuation_cache' => 'plan-wf-production-plan',
       'version' => '1.16.4',
       'context' => %w[AWS-OIDC-Role Slack],
       'use_circle_workspace' => false,
@@ -98,6 +102,23 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
       ['Approve apply (meta)', 'Apply (meta)', 'Approve apply (github)', 'Apply (github)']
     )
     expect(YAML.safe_load_file(@out_path)['orbs']).to eq('buildomat' => 'teak/buildomat@0.1')
+  end
+
+  it 'fails when a root has no plan output directory' do
+    plan('meta', changes: false)
+
+    result = generate('meta,production')
+    expect(result.status).not_to be_success
+    expect(result.stderr).to include('No plan output for production')
+  end
+
+  it 'fails when a changed root has no continuation-cache-id' do
+    plan('meta', changes: true)
+    File.write(File.join(@plan_base, 'meta', 'continue_params.json'), '{"environment-active":true}')
+
+    result = generate('meta')
+    expect(result.status).not_to be_success
+    expect(result.stderr).to include('no continuation-cache-id')
   end
 
   it 'rejects a root name that could break the generated YAML' do

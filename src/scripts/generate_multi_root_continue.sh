@@ -50,7 +50,7 @@ ContextsYaml() {
 }
 
 GenerateMultiRootContinue() {
-  local contexts jobs root changed
+  local contexts jobs root changed cache_id
   contexts=$(ContextsYaml)
   jobs=""
   changed=()
@@ -60,9 +60,23 @@ GenerateMultiRootContinue() {
       echo "Invalid root name: '${root}'" >&2
       exit 1
     fi
+    # A plan job always persists its out_path, so a missing directory means a
+    # misconfigured out_path/plan_base or a lost persist, not "no changes".
+    if [[ ! -d "${I_PLAN_BASE}/${root}" ]]; then
+      echo "No plan output for ${root} at ${I_PLAN_BASE}/${root}" >&2
+      exit 1
+    fi
     if [[ ! -f "${I_PLAN_BASE}/${root}/tf_plan_changes" ]]; then
       echo "${root}: no changes"
       continue
+    fi
+    # The plan job's workflow id, not ours: a rerun-from-failed gets a new
+    # workflow id but keeps the workspace, and the planfile was cached under
+    # the original.
+    cache_id=$(jq -r '."continuation-cache-id" // empty' "${I_PLAN_BASE}/${root}/continue_params.json")
+    if [[ -z "${cache_id}" ]]; then
+      echo "${root} has changes but no continuation-cache-id in continue_params.json" >&2
+      exit 1
     fi
     echo "${root}: has changes"
     changed+=("${root}")
@@ -76,7 +90,7 @@ GenerateMultiRootContinue() {
           version: \"${I_TERRAFORM_VERSION}\"
           path: \"${root}\"
           plan_path: \"${I_PLAN_BASE}/${root}\"
-          continuation_cache: \"${CIRCLE_WORKFLOW_ID}-${root}\"
+          continuation_cache: \"${cache_id}-${root}-plan\"
           use_circle_workspace: false
           requires:
             - \"Approve apply (${root})\""
