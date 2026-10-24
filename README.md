@@ -151,9 +151,9 @@ is the merge boilerplate. To ask for a promote, do one of:
 * squash-merge with the PR title `Promote to: patch`
 * push a commit to `main` whose subject is `Promote to: patch`
 
-`publish` and `promote` run in a CircleCI context (`buildomat-orb-publish`)
-that carries `CIRCLECI_CLI_TOKEN`, an API token for the orb CLI. Restrict
-the context to `main`.
+`publish` and `promote` run in the `CircleCI` context, whose
+`CIRCLE_API_TOKEN` is the API token for the orb CLI. That token has to be
+allowed to publish `teak/buildomat`.
 
 #### Break-glass
 

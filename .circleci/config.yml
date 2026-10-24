@@ -6,19 +6,20 @@ orbs:
 commands:
   # The Rakefile parses `circleci` output (ChangelogGate.parse_promoted_version,
   # registry_version) and is pinned to this version. The orb's default,
-  # `latest`, is 1.x, which prints different output and reads CIRCLE_TOKEN
-  # instead of CIRCLECI_CLI_TOKEN. Bump this with those parsers.
+  # `latest`, is 1.x, which reads CIRCLE_TOKEN, not CIRCLECI_CLI_TOKEN. Bump
+  # this with those parsers.
   install-cli:
     steps:
       - circleci-cli/install:
           version: v0.1.33494
 
   authenticated-cli:
-    description: Checkout plus a circleci CLI logged in with CIRCLECI_CLI_TOKEN from the job's context.
+    description: Checkout plus a circleci CLI logged in with CIRCLE_API_TOKEN from the job's context.
     steps:
       - checkout
       - install-cli
-      - circleci-cli/setup
+      - circleci-cli/setup:
+          token: CIRCLE_API_TOKEN
 
 jobs:
   test:
@@ -69,8 +70,7 @@ workflows:
     jobs:
       - test
       - publish:
-          # TODO: placeholder; swap for the real context name before merge.
-          context: buildomat-orb-publish
+          context: CircleCI
           requires:
             - test
           filters:
@@ -84,7 +84,7 @@ workflows:
             branches:
               only: main
       - promote:
-          context: buildomat-orb-publish
+          context: CircleCI
           requires:
             - hold
           filters:
