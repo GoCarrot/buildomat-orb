@@ -65,6 +65,15 @@ parameters:
       since cache keys are immutable and the first save wins.
     default: "{{ .Environment.CIRCLE_WORKFLOW_ID }}"
 
+  store_plan_artifact:
+    type: boolean
+    description: >
+      Store the planfile as a job artifact. A planfile holds prior state and
+      data-source results in plaintext (e.g. decrypted aws_kms_secrets), and
+      artifacts are downloadable by anyone with project read. Set false for
+      roots that read secrets. The continuation cache still gets the planfile.
+    default: true
+
   lock:
     type: boolean
     description: >
@@ -113,7 +122,10 @@ steps:
             key: << parameters.continuation_cache_key >>
             paths:
               - << parameters.out_path >>/<< parameters.out_plan >>
-  - store_artifacts:
-      path: << parameters.out_path >>/<< parameters.out_plan >>
+  - when:
+      condition: << parameters.store_plan_artifact >>
+      steps:
+        - store_artifacts:
+            path: << parameters.out_path >>/<< parameters.out_plan >>
   - store_artifacts:
       path: << parameters.out_path >>/<< parameters.out_log >>
