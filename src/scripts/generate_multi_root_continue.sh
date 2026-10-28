@@ -21,7 +21,7 @@
 # that runs alongside the hold, not before it. Roots with no changes get nothing. If no root changed,
 # no config is written, and the caller skips the continuation.
 
-# BEGIN ExpandVars (identical in every script that expands params; spec/expand_vars_spec.rb keeps the copies in sync)
+# BEGIN ExpandVars (copies kept identical by spec/expand_vars_spec.rb)
 # Expands $NAME and ${NAME} from the environment and nothing else: no command
 # execution, quoting, globbing or word splitting, so a param value is data.
 ExpandVars() {

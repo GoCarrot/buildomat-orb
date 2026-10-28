@@ -18,7 +18,7 @@
 # is switched on: account registry -> <prefix>/config/core/active. Hands the
 # answer to later steps as ENVIRONMENT_ACTIVE through $BASH_ENV.
 
-# BEGIN ExpandVars (identical in every script that expands params; spec/expand_vars_spec.rb keeps the copies in sync)
+# BEGIN ExpandVars (copies kept identical by spec/expand_vars_spec.rb)
 # Expands $NAME and ${NAME} from the environment and nothing else: no command
 # execution, quoting, globbing or word splitting, so a param value is data.
 ExpandVars() {
