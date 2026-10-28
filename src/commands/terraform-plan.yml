@@ -110,6 +110,8 @@ steps:
   - when:
       condition: << parameters.continuation >>
       steps:
+        - check-environment-active:
+            workspace: << parameters.workspace >>
         - run:
             name: "Generate continue_params"
             environment:
