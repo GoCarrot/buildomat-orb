@@ -44,15 +44,29 @@ parameters:
     default: ''
     description: "Comma separated list of additional parameters to set for the continued pipeline e.g. 'foo=bar,baz=boo'"
     type: string
-
+  check_environment_active:
+    type: boolean
+    default: false
+    description: >
+      Look up whether the environment behind deploy_account_slug is active and
+      send environment-active to the continuation, so an inactive environment
+      skips its deploy hold. Installs the AWS cli and assumes the OIDC role, so
+      the job needs a context that provides AWS_ROLE_ARN. Off by default: the
+      continuation's own default (active) applies.
 
 steps:
   - checkout
+  - when:
+      condition: << parameters.check_environment_active >>
+      steps:
+        - aws-cli/install
+        - aws-oidc-assume
   - ami-update-continuation:
       region: << parameters.region >>
       deploy_account_slug: << parameters.deploy_account_slug >>
       build_account_slug: << parameters.build_account_slug >>
       continuation_parameters: << parameters.continuation_parameters >>
+      check_environment_active: << parameters.check_environment_active >>
   - when:
       condition: << parameters.before_continuation_steps >>
       steps: << parameters.before_continuation_steps >>
