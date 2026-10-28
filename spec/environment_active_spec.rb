@@ -77,20 +77,13 @@ RSpec.describe 'environment_active.sh (behavioral)' do
     expect(handed_off).to eq("export ENVIRONMENT_ACTIVE=true\n")
   end
 
-  it 'treats a workspace with no registry entry as ACTIVE' do
-    result = check(registry: 'notfound')
+  it 'treats a workspace with no registry entry as ACTIVE, without looking up the activation parameter' do
+    result = check(registry: 'notfound', active: 'inactive')
 
     expect(result.status).to be_success, result.stderr
     expect(result.stdout).to include('ENVIRONMENT_ACTIVE=true')
-    expect(handed_off).to eq("export ENVIRONMENT_ACTIVE=true\n")
-  end
-
-  it 'does not look up the activation parameter when there is no registry prefix' do
-    result = check(registry: 'notfound', active: 'inactive')
-
-    expect(result.stdout).not_to include('Checking SSM parameter')
     expect(aws_calls.grep(/config\/core\/active/)).to be_empty
-    expect(result.stdout).to include('ENVIRONMENT_ACTIVE=true')
+    expect(handed_off).to eq("export ENVIRONMENT_ACTIVE=true\n")
   end
 
   it 'treats a registry entry with no prefix as ACTIVE' do

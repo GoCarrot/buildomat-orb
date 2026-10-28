@@ -15,7 +15,7 @@ MAINTENANCE:
 
 * `terraform-plan` with `continuation: true` runs `check-environment-active` before
   generating `continue_params.json`. Same lookup and same output.
-* `ami-update-continuation`: fix the `I_BUILD_ACCOUNT_SLUG` typo in the script's export.
+* `ami-update-continuation`: fix the misspelled `I_BUILI_ACCOUNT_SLUG` in the script's export.
 
 ## 0.1.15
 

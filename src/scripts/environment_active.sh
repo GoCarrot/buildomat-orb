@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright 2023 Teak.io, Inc.
+# Copyright 2026 Teak.io, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 # Resolves whether the environment behind a workspace (or deploy account slug)
 # is switched on: account registry -> <prefix>/config/core/active. Hands the
-# answer to later steps as ENVIRONMENT_ACTIVE through $BASH_ENV, so the scripts
-# that build continuation parameters don't each repeat the lookup.
+# answer to later steps as ENVIRONMENT_ACTIVE through $BASH_ENV.
 
 SetupEnv() {
   I_WORKSPACE=$(eval echo "${I_WORKSPACE}")
