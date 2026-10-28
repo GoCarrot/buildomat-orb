@@ -25,11 +25,18 @@ SetupEnv() {
   echo "I_BUILD_ACCOUNT_SLUG=$I_BUILD_ACCOUNT_SLUG"
   echo "I_CONTINUATION_PARAMTERS=$I_CONTINUATION_PARAMTERS"
 
-  export I_REGION I_DEPLOY_ACCOUNT_SLUG I_BUILI_ACCOUNT_SLUG I_CONTINUATION_PARAMTERS
+  export I_REGION I_DEPLOY_ACCOUNT_SLUG I_BUILD_ACCOUNT_SLUG I_CONTINUATION_PARAMTERS
 }
 
 BuildParams() {
   PARAMS=$(jq --null-input '{"region": $ENV.I_REGION, "build_account_slug": $ENV.I_BUILD_ACCOUNT_SLUG, "deploy_account_slug": $ENV.I_DEPLOY_ACCOUNT_SLUG}')
+  # Only when asked: the check-environment-active step ran, so ENVIRONMENT_ACTIVE
+  # is its answer. Otherwise leave the key out and the consumer's default holds.
+  if [[ "${I_CHECK_ENVIRONMENT_ACTIVE:-false}" == "true" ]]; then
+    : "${ENVIRONMENT_ACTIVE:?ENVIRONMENT_ACTIVE is not set; run check-environment-active first}"
+    PARAMS=$(echo "$PARAMS" | jq --argjson active "$ENVIRONMENT_ACTIVE" '. + {"environment-active": $active}')
+  fi
+
   if [[ -n "${I_CONTINUATION_PARAMTERS}" ]]; then
     for var in $(echo "${I_CONTINUATION_PARAMTERS}" | tr ',' '\n'); do
       IFS='=' read -r key value <<< "$var"

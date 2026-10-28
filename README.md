@@ -123,6 +123,27 @@ workflows:
             - buildomat/terraform-plan
 ```
 
+#### Inactive Environments
+
+An environment is inactive when `<prefix>/config/core/active` is `inactive`, where
+`<prefix>` comes from `/omat/account_registry/<workspace>`. A missing registry entry or
+parameter counts as active. Inactive environments run only the image build: no apply or
+deploy hold.
+
+`terraform-plan` with `continuation: true` always checks. For pipelines started by an
+upstream AMI update, opt in on the `ami-update-continuation` job:
+
+```yaml
+- buildomat/ami-update-continuation:
+    context: [AWS-OIDC-Role]  # provides AWS_ROLE_ARN; the job reads SSM
+    deploy_account_slug: << pipeline.parameters.in_deploy_account_slug >>
+    check_environment_active: true
+```
+
+It looks up `deploy_account_slug` and sends `environment-active` to your continue.yml, which
+must declare that parameter. Left off (the default), nothing is sent and the continuation's own
+default (active) applies.
+
 ## Development
 
 Development requires that you have the circleci CLI installed. `brew install circleci`

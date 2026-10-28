@@ -31,8 +31,21 @@ parameters:
     default: ''
     description: "Comma separated list of additional parameters to set for the continued pipeline e.g. 'foo=bar,baz=boo'"
     type: string
+  check_environment_active:
+    type: boolean
+    default: false
+    description: >
+      Look up whether the environment behind deploy_account_slug is active and
+      send the answer as the environment-active parameter. Needs the AWS cli and
+      credentials that can read SSM. When false, environment-active is not sent
+      and the continuation's default applies.
 
 steps:
+  - when:
+      condition: << parameters.check_environment_active >>
+      steps:
+        - check-environment-active:
+            workspace: << parameters.deploy_account_slug >>
   - run:
       name: "Generate continue_params.json"
       environment:
@@ -40,4 +53,5 @@ steps:
         I_DEPLOY_ACCOUNT_SLUG: << parameters.deploy_account_slug >>
         I_BUILD_ACCOUNT_SLUG: << parameters.build_account_slug >>
         I_CONTINUATION_PARAMTERS: << parameters.continuation_parameters >>
+        I_CHECK_ENVIRONMENT_ACTIVE: << parameters.check_environment_active >>
       command: << include(scripts/ami_update_continue_params.sh) >>
