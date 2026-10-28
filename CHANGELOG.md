@@ -1,3 +1,19 @@
+## 0.1.17
+
+BUG FIXES:
+
+* Params are no longer run through `eval echo`. Every script now expands `$NAME` and
+  `${NAME}` from the environment and treats the rest of the value as text. Before, a
+  newline-separated list (`auto_deploy_services`, `approve_deploy_services`,
+  `auto_deploy_no_rollback_services`, `contexts`) dropped everything after the first line and
+  ran each later line as a command, and any param containing `;`, `$(...)` or backticks ran as
+  shell. Comma and newline separated lists now both work as documented.
+* `generate-multi-root-continue` / `terraform-multi-root-continuation`: `roots` expands
+  `$NAME` references like every other param.
+
+Behavior change: values are no longer trimmed, whitespace-collapsed, unquoted, globbed or
+tilde-expanded, and `${NAME:-default}` style forms stay literal.
+
 ## 0.1.16
 
 ENHANCEMENTS:

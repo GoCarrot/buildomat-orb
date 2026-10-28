@@ -14,14 +14,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# BEGIN ExpandVars (copies kept identical by spec/expand_vars_spec.rb)
+# Expands $NAME and ${NAME} from the environment and nothing else: no command
+# execution, quoting, globbing or word splitting, so a param value is data.
+ExpandVars() {
+  local rest="$1" out="" name
+  # shellcheck disable=SC2016 # a regex, not a shell expansion
+  local re='\$(\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))'
+  while [[ "${rest}" =~ ${re} ]]; do
+    name="${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    out="${out}${rest%%"${BASH_REMATCH[0]}"*}${!name:-}"
+    rest="${rest#*"${BASH_REMATCH[0]}"}"
+  done
+  printf '%s' "${out}${rest}"
+}
+# END ExpandVars
+
 SetupEnv() {
-  I_OUT_LOG=$(eval echo "${I_OUT_LOG}")
-  I_OUT_PATH=$(eval echo "${I_OUT_PATH}")
-  I_PATH=$(eval echo "${I_PATH}")
-  I_ONLY=$(eval echo "${I_ONLY}")
-  I_EXCEPT=$(eval echo "${I_EXCEPT}")
-  I_VAR=$(eval echo "${I_VAR}")
-  I_PACKER_LOG=$(eval echo "${I_PACKER_LOG}")
+  I_OUT_LOG=$(ExpandVars "${I_OUT_LOG}")
+  I_OUT_PATH=$(ExpandVars "${I_OUT_PATH}")
+  I_PATH=$(ExpandVars "${I_PATH}")
+  I_ONLY=$(ExpandVars "${I_ONLY}")
+  I_EXCEPT=$(ExpandVars "${I_EXCEPT}")
+  I_VAR=$(ExpandVars "${I_VAR}")
+  I_PACKER_LOG=$(ExpandVars "${I_PACKER_LOG}")
 
   echo "I_OUT_LOG"="${I_OUT_LOG}"
   echo "I_OUT_PATH"="${I_OUT_PATH}"

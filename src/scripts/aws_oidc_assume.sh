@@ -14,12 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# BEGIN ExpandVars (copies kept identical by spec/expand_vars_spec.rb)
+# Expands $NAME and ${NAME} from the environment and nothing else: no command
+# execution, quoting, globbing or word splitting, so a param value is data.
+ExpandVars() {
+  local rest="$1" out="" name
+  # shellcheck disable=SC2016 # a regex, not a shell expansion
+  local re='\$(\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))'
+  while [[ "${rest}" =~ ${re} ]]; do
+    name="${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    out="${out}${rest%%"${BASH_REMATCH[0]}"*}${!name:-}"
+    rest="${rest#*"${BASH_REMATCH[0]}"}"
+  done
+  printf '%s' "${out}${rest}"
+}
+# END ExpandVars
+
 SetupEnv() {
-  I_REGION=$(eval echo "${I_REGION}")
-  I_ROLE_ARN=$(eval echo "${I_ROLE_ARN}")
-  I_DURATION_SECONDS=$(eval echo "${I_DURATION_SECONDS}")
-  I_ROLE_EXTERNAL_ID=$(eval echo "${I_ROLE_EXTERNAL_ID}")
-  I_FORCE_ASSUMPTION=$(eval echo "${I_FORCE_ASSUMPTION}")
+  I_REGION=$(ExpandVars "${I_REGION}")
+  I_ROLE_ARN=$(ExpandVars "${I_ROLE_ARN}")
+  I_DURATION_SECONDS=$(ExpandVars "${I_DURATION_SECONDS}")
+  I_ROLE_EXTERNAL_ID=$(ExpandVars "${I_ROLE_EXTERNAL_ID}")
+  I_FORCE_ASSUMPTION=$(ExpandVars "${I_FORCE_ASSUMPTION}")
 
   echo "I_REGION=$I_REGION"
   echo "I_ROLE_ARN=$I_ROLE_ARN"

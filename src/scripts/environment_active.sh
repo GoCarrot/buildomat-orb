@@ -18,8 +18,24 @@
 # is switched on: account registry -> <prefix>/config/core/active. Hands the
 # answer to later steps as ENVIRONMENT_ACTIVE through $BASH_ENV.
 
+# BEGIN ExpandVars (copies kept identical by spec/expand_vars_spec.rb)
+# Expands $NAME and ${NAME} from the environment and nothing else: no command
+# execution, quoting, globbing or word splitting, so a param value is data.
+ExpandVars() {
+  local rest="$1" out="" name
+  # shellcheck disable=SC2016 # a regex, not a shell expansion
+  local re='\$(\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))'
+  while [[ "${rest}" =~ ${re} ]]; do
+    name="${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    out="${out}${rest%%"${BASH_REMATCH[0]}"*}${!name:-}"
+    rest="${rest#*"${BASH_REMATCH[0]}"}"
+  done
+  printf '%s' "${out}${rest}"
+}
+# END ExpandVars
+
 SetupEnv() {
-  I_WORKSPACE=$(eval echo "${I_WORKSPACE}")
+  I_WORKSPACE=$(ExpandVars "${I_WORKSPACE}")
 
   echo "I_WORKSPACE"="${I_WORKSPACE}"
 }
