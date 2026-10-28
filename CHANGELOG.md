@@ -1,3 +1,12 @@
+## 0.1.15
+
+BUG FIXES:
+
+* `terraform-plan` with `continuation: true`: a workspace with no entry in the
+  account registry (`/omat/account_registry/<workspace>`) is treated as ACTIVE,
+  instead of failing the job with `ParameterNotFound`. Other registry lookup
+  errors still fail the job.
+
 ## 0.1.14
 
 ENHANCEMENTS:
