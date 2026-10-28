@@ -124,10 +124,11 @@ RSpec.describe 'terraform_plan_continuation.sh CheckEnvironmentActive (behaviora
   end
 
   it 'treats a registry entry with no prefix as ACTIVE' do
-    result = check(registry: '{"account":"development-ci-cd"}')
+    result = check(registry: '{"account":"development-ci-cd"}', active: 'inactive')
 
     expect(result.status).to be_success, result.stderr
     expect(result.stdout).to include('ENVIRONMENT_ACTIVE=true')
+    expect(result.stdout).not_to include('Checking SSM parameter')
   end
 
   it 'fails the job on registry errors other than a missing parameter' do
