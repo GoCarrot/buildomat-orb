@@ -28,18 +28,18 @@ RSpec.describe 'terraform_plan_continuation.sh GenerateContinuation (behavioral)
     end
   end
 
-  def generate(changes:)
+  def generate(changes:, environment_active: 'true')
     FileUtils.touch(File.join(@out_path, 'tf_plan_changes')) if changes
     env = {
       'I_OUT_PATH' => @out_path,
       'I_WORKSPACE' => '',
       'I_OUT_LOG' => 'plan.log',
       'I_CONTINUATION_PARAMETERS' => '',
-      'ENVIRONMENT_ACTIVE' => 'true',
       'CIRCLE_WORKFLOW_ID' => 'wf-1',
       'CIRCLE_WORKFLOW_JOB_ID' => 'job-1',
       'CIRCLE_NODE_INDEX' => '0'
     }
+    env['ENVIRONMENT_ACTIVE'] = environment_active if environment_active
     result = ScriptHarness.source('terraform_plan_continuation.sh', 'GenerateContinuation', env: env)
     raise "failed: #{result.stderr}" unless result.status.success?
   end
@@ -50,6 +50,10 @@ RSpec.describe 'terraform_plan_continuation.sh GenerateContinuation (behavioral)
     params = JSON.parse(File.read(File.join(@out_path, 'continue_params.json')))
     expect(params['plan-log-url']).to eq("https://output.circle-artifacts.com/output/job/job-1/artifacts/0#{@out_path}/plan.log")
     expect(params.keys).to match_array(%w[run-apply environment-active continuation-cache-id workspace plan-log-url])
+  end
+
+  it 'fails rather than guess when the activation check left no result' do
+    expect { generate(changes: false, environment_active: nil) }.to raise_error(/ENVIRONMENT_ACTIVE/)
   end
 
   it 'records nothing when the plan has no changes' do
