@@ -42,7 +42,30 @@ CheckEnvironmentActive() {
     return
   fi
 
-  PARAM_PREFIX=$(aws ssm get-parameter --name "/omat/account_registry/${I_WORKSPACE}" --output text --query Parameter.Value | jq --raw-output '.prefix')
+  # A workspace with no account registry entry has no activation parameter to
+  # check, so it stays ACTIVE. Any other lookup failure (access, throttling) is
+  # fatal: failing open there could apply an environment that is switched off.
+  REGISTRY_ERR=$(mktemp)
+  if REGISTRY_VALUE=$(aws ssm get-parameter --name "/omat/account_registry/${I_WORKSPACE}" --output text --query Parameter.Value 2>"${REGISTRY_ERR}"); then
+    PARAM_PREFIX=$(echo "${REGISTRY_VALUE}" | jq --raw-output '.prefix // empty' 2>/dev/null || echo "")
+  elif grep -q ParameterNotFound "${REGISTRY_ERR}"; then
+    PARAM_PREFIX=""
+  else
+    cat "${REGISTRY_ERR}" >&2
+    rm -f "${REGISTRY_ERR}"
+    exit 1
+  fi
+  rm -f "${REGISTRY_ERR}"
+
+  if [ -z "${PARAM_PREFIX}" ]; then
+    echo "Workspace: ${I_WORKSPACE}"
+    echo "No account registry prefix for this workspace - treating environment as ACTIVE (default behavior)"
+    echo "RESULT: Environment is ACTIVE"
+    echo "CONSEQUENCE: Terraform apply workflow will be available if there are changes"
+    echo "=========================================="
+    return
+  fi
+
   SSM_PARAM_NAME="${PARAM_PREFIX}/config/core/active"
   echo "Workspace: ${I_WORKSPACE}"
   echo "Checking SSM parameter: ${SSM_PARAM_NAME}"
