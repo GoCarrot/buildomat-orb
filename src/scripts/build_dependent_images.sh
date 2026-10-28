@@ -14,10 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# BEGIN ExpandVars (identical in every script that expands params; spec/expand_vars_spec.rb keeps the copies in sync)
+# Expands $NAME and ${NAME} from the environment and nothing else: no command
+# execution, quoting, globbing or word splitting, so a param value is data.
+ExpandVars() {
+  local rest="$1" out="" name
+  # shellcheck disable=SC2016 # a regex, not a shell expansion
+  local re='\$(\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))'
+  while [[ "${rest}" =~ ${re} ]]; do
+    name="${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    out="${out}${rest%%"${BASH_REMATCH[0]}"*}${!name:-}"
+    rest="${rest#*"${BASH_REMATCH[0]}"}"
+  done
+  printf '%s' "${out}${rest}"
+}
+# END ExpandVars
+
 SetupEnv() {
-  I_REGION=$(eval echo "${I_REGION}")
-  I_AMI_NAME_PREFIX=$(eval echo "${I_AMI_NAME_PREFIX}")
-  I_BUILD_ACCOUNT_SLUG=$(eval echo "${I_BUILD_ACCOUNT_SLUG}")
+  I_REGION=$(ExpandVars "${I_REGION}")
+  I_AMI_NAME_PREFIX=$(ExpandVars "${I_AMI_NAME_PREFIX}")
+  I_BUILD_ACCOUNT_SLUG=$(ExpandVars "${I_BUILD_ACCOUNT_SLUG}")
 
   echo "I_REGION=$I_REGION"
   echo "I_AMI_NAME_PREFIX=$I_AMI_NAME_PREFIX"

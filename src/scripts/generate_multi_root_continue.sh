@@ -21,15 +21,30 @@
 # that runs alongside the hold, not before it. Roots with no changes get nothing. If no root changed,
 # no config is written, and the caller skips the continuation.
 
+# BEGIN ExpandVars (identical in every script that expands params; spec/expand_vars_spec.rb keeps the copies in sync)
+# Expands $NAME and ${NAME} from the environment and nothing else: no command
+# execution, quoting, globbing or word splitting, so a param value is data.
+ExpandVars() {
+  local rest="$1" out="" name
+  # shellcheck disable=SC2016 # a regex, not a shell expansion
+  local re='\$(\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))'
+  while [[ "${rest}" =~ ${re} ]]; do
+    name="${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    out="${out}${rest%%"${BASH_REMATCH[0]}"*}${!name:-}"
+    rest="${rest#*"${BASH_REMATCH[0]}"}"
+  done
+  printf '%s' "${out}${rest}"
+}
+# END ExpandVars
+
 SetupEnv() {
-  # Not eval-expanded like the others: roots may be newline separated, and
-  # eval would run every line after the first as a command.
-  I_PLAN_BASE=$(eval echo "${I_PLAN_BASE}")
-  I_TERRAFORM_VERSION=$(eval echo "${I_TERRAFORM_VERSION}")
-  I_CONTEXTS=$(eval echo "${I_CONTEXTS}")
-  I_SLACK_CONTEXTS=$(eval echo "${I_SLACK_CONTEXTS}")
-  I_OUT_PATH=$(eval echo "${I_OUT_PATH}")
-  I_ORB=$(eval echo "${I_ORB}")
+  I_ROOTS=$(ExpandVars "${I_ROOTS}")
+  I_PLAN_BASE=$(ExpandVars "${I_PLAN_BASE}")
+  I_TERRAFORM_VERSION=$(ExpandVars "${I_TERRAFORM_VERSION}")
+  I_CONTEXTS=$(ExpandVars "${I_CONTEXTS}")
+  I_SLACK_CONTEXTS=$(ExpandVars "${I_SLACK_CONTEXTS}")
+  I_OUT_PATH=$(ExpandVars "${I_OUT_PATH}")
+  I_ORB=$(ExpandVars "${I_ORB}")
 
   echo "I_ROOTS=${I_ROOTS}"
   echo "I_PLAN_BASE=${I_PLAN_BASE}"

@@ -50,7 +50,7 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
     "https://output.circle-artifacts.com/output/job/job-#{root.tr('/', '-')}/artifacts/0#{@plan_base}/#{root}/plan.log"
   end
 
-  def generate(roots, slack_contexts: '')
+  def generate(roots, slack_contexts: '', env: {})
     env = {
       'I_ROOTS' => roots,
       'I_PLAN_BASE' => @plan_base,
@@ -61,7 +61,7 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
       'I_ORB' => 'teak/buildomat@0.1',
       # A rerun-from-failed: the fan-in's workflow id differs from the plans'.
       'CIRCLE_WORKFLOW_ID' => 'rerun-wf'
-    }
+    }.merge(env)
     ScriptHarness.source('generate_multi_root_continue.sh', 'SetupEnv; GenerateMultiRootContinue', env: env)
   end
 
@@ -117,6 +117,18 @@ RSpec.describe 'generate_multi_root_continue.sh (behavioral)' do
       ['Approve apply (meta)', 'Apply (meta)', 'Approve apply (github)', 'Apply (github)']
     )
     expect(YAML.safe_load_file(@out_path)['orbs']).to eq('buildomat' => 'teak/buildomat@0.1')
+  end
+
+  it 'expands environment references in newline separated roots' do
+    plan('meta', changes: true)
+    plan('github', changes: true)
+
+    result = generate("$FIRST_ROOT\n${SECOND_ROOT}", env: { 'FIRST_ROOT' => 'meta', 'SECOND_ROOT' => 'github' })
+    expect(result.status).to be_success, result.stderr
+    expect(result.stderr).not_to include('command not found')
+    expect(jobs.map { |j| j.values.first['name'] }).to eq(
+      ['Approve apply (meta)', 'Apply (meta)', 'Approve apply (github)', 'Apply (github)']
+    )
   end
 
   it 'fails when a root has no plan output directory' do
