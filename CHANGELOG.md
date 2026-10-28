@@ -1,3 +1,22 @@
+## 0.1.16
+
+ENHANCEMENTS:
+
+* `ami-update-continuation` job (and command): new `check_environment_active` param,
+  default `false`. When `true`, looks up whether `deploy_account_slug` is active and sends
+  `environment-active` in `continue_params.json`, so an AMI-triggered pipeline for an
+  inactive environment skips its deploy hold. The job installs the AWS cli and assumes the
+  OIDC role, so it needs a context providing `AWS_ROLE_ARN`. Off, nothing changes.
+* New `check-environment-active` command: the activation lookup `terraform-plan` already did,
+  as its own step. It exports `ENVIRONMENT_ACTIVE` to later steps. A missing registry entry or
+  parameter is active; other lookup errors fail the step.
+
+MAINTENANCE:
+
+* `terraform-plan` with `continuation: true` runs `check-environment-active` before
+  generating `continue_params.json`. Same lookup and same output.
+* `ami-update-continuation`: fix the `I_BUILD_ACCOUNT_SLUG` typo in the script's export.
+
 ## 0.1.15
 
 BUG FIXES:
