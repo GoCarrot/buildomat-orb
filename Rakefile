@@ -95,7 +95,9 @@ end
 
 desc 'Run shellcheck on all scripts'
 task :shellcheck do
-  sh 'shellcheck src/scripts/* script/*'
+  # script/worktree links into teak-hq, so it dangles in a standalone clone (CI).
+  scripts = Dir['src/scripts/*'] + Dir['script/*'].reject { |f| File.symlink?(f) }
+  sh 'shellcheck', *scripts
 end
 
 desc 'Run the Ruby unit tests'
