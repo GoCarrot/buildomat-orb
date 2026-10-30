@@ -60,7 +60,7 @@ jobs:
 
   promote:
     docker:
-      - image: cimg/ruby:3.3.9
+      - image: cimg/ruby:3.4.12
     steps:
       - checkout
       - install-cli

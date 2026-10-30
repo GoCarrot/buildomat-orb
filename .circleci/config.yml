@@ -29,7 +29,7 @@ commands:
 jobs:
   test:
     docker:
-      - image: cimg/ruby:3.3.9
+      - image: cimg/ruby:3.4.12
     steps:
       - checkout
       - install-cli
@@ -51,7 +51,7 @@ jobs:
   # can't change what an approval ships.
   publish:
     docker:
-      - image: cimg/ruby:3.3.9
+      - image: cimg/ruby:3.4.12
     steps:
       - authenticated-cli
       - run:
@@ -63,7 +63,7 @@ jobs:
 
   gate:
     docker:
-      - image: cimg/ruby:3.3.9
+      - image: cimg/ruby:3.4.12
     steps:
       - authenticated-cli
       - run:
