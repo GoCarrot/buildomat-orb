@@ -81,6 +81,18 @@ RSpec.describe 'packer_build.sh (behavioral)' do
                                 '-var', 'region=us-west-2', '-var', 'build_from_account=development-ci-cd', 'packer'])
   end
 
+  # The old inline block split var on commas and newlines and ignored empty entries.
+  it 'splits var on commas and newlines and skips empty entries' do
+    stdout, _, status = run_step('I_VAR' => "a=1\nb=2,,c=3\n")
+    expect(status).to be_success
+    expect(argv(stdout)).to eq(['build', '-color=false', '-timestamp-ui', '-var', 'a=1', '-var', 'b=2', '-var', 'c=3', 'packer'])
+  end
+
+  it 'keeps a var value containing spaces as one arg' do
+    stdout, _, = run_step('I_VAR' => 'x=a b,y=2')
+    expect(argv(stdout)).to include('x=a b', 'y=2')
+  end
+
   it 'prints the final args to the log and hands PACKER_LOG to packer' do
     stdout, _, = run_step('I_EXCEPT' => 'vagrant.*', 'I_PACKER_LOG' => '1')
     expect(stdout).to include('packer build -color=false -timestamp-ui -except=vagrant.\\* packer')

@@ -63,8 +63,9 @@ PackerBuild() {
 
   if [[ -n "${I_VAR}" ]]; then
     local vars var
-    IFS=',' read -r -a vars <<<"${I_VAR}"
+    IFS=$',\n' read -r -d '' -a vars <<<"${I_VAR}" || true
     for var in "${vars[@]}"; do
+      [[ -n "${var}" ]] || continue
       build_args+=(-var "${var}")
     done
   fi
