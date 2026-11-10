@@ -1,3 +1,14 @@
+## 0.1.19
+
+MAINTENANCE:
+
+* `packer-build` command (and job): the step's shell moved from an inline block into
+  `src/scripts/packer_build.sh`, so shellcheck covers it and params are expanded with
+  `ExpandVars` instead of being interpolated into shell. The args passed to `packer build` are
+  unchanged, with one difference: a `var` entry containing spaces is now passed as a single
+  `-var` argument instead of being word-split. The step now prints the final `packer build`
+  args before running, since CircleCI no longer renders them into the step.
+
 ## 0.1.18
 
 BUG FIXES:

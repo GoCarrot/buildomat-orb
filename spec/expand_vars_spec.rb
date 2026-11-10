@@ -26,7 +26,7 @@ RSpec.describe 'ExpandVars' do
   copies = scripts.to_h { |path| [File.basename(path), File.read(path)[block_re]] }.compact
 
   it 'is carried by the scripts that expand params' do
-    expect(copies.keys).to include('generate_continue.sh', 'generate_multi_root_continue.sh', 'terraform_init.sh')
+    expect(copies.keys).to include('generate_continue.sh', 'generate_multi_root_continue.sh', 'terraform_init.sh', 'packer_build.sh')
   end
 
   it 'has one identical copy per script' do
