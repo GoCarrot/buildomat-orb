@@ -70,8 +70,7 @@ PackerBuild() {
     done
   fi
 
-  # The step's command is now a script, so CircleCI no longer renders the args
-  # into the job log. Print them.
+  # CircleCI doesn't render the args into the log for a script step; print them.
   printf 'packer build'
   printf ' %q' "${build_args[@]}" "${I_PATH}"
   printf '\n'
