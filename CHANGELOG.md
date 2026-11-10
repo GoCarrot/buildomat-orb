@@ -1,3 +1,15 @@
+## 0.1.18
+
+BUG FIXES:
+
+* `packer-build` command (and job): image builds no longer fail sporadically with
+  `/usr/bin/python: not found` from `ansible.legacy.setup`. If the first ssh connection
+  (ansible's interpreter discovery) was lost right after boot, ansible silently fell back
+  to `/usr/bin/python`, which Debian doesn't ship. The step now sets `ANSIBLE_SSH_RETRIES=5`
+  so a lost connection is retried, and `ANSIBLE_PYTHON_INTERPRETER=/usr/bin/python3` so
+  discovery can't pick the wrong interpreter. A playbook or inventory
+  `ansible_python_interpreter` still takes precedence.
+
 ## 0.1.17
 
 BUG FIXES:

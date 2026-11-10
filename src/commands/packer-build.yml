@@ -71,6 +71,13 @@ steps:
         I_EXCEPT: << parameters.except >>
         I_VAR: << parameters.var >>
         I_PACKER_LOG: << parameters.packer_log >>
+        # Packer's ansible provisioner inherits this env. Ansible's interpreter discovery
+        # runs over the first ssh connection; if that connection is lost right after boot
+        # it silently falls back to /usr/bin/python, which Debian doesn't ship, and the
+        # build dies with "/usr/bin/python: not found". Retry lost connections, and skip
+        # discovery. A playbook-level ansible_python_interpreter still wins.
+        ANSIBLE_SSH_RETRIES: "5"
+        ANSIBLE_PYTHON_INTERPRETER: /usr/bin/python3
       command: |
         mkdir -p << parameters.out_path >>
 
