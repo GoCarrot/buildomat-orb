@@ -75,26 +75,7 @@ steps:
         # interpreter discovery, which falls back to a nonexistent /usr/bin/python.
         ANSIBLE_SSH_RETRIES: "5"
         ANSIBLE_PYTHON_INTERPRETER: /usr/bin/python3
-      command: |
-        mkdir -p << parameters.out_path >>
-
-        BUILD_ARGS="-color=false -timestamp-ui"
-
-        if [[ -n "<< parameters.only >>" ]]; then
-          BUILD_ARGS="$BUILD_ARGS -only=<< parameters.only >>"
-        fi
-
-        if [[ -n "<< parameters.except >>" ]]; then
-          BUILD_ARGS="$BUILD_ARGS -except=<< parameters.except >>"
-        fi
-
-        if [[ -n "<< parameters.var >>" ]]; then
-            for var in $(echo "<< parameters.var >>" | tr ',' '\n'); do
-                BUILD_ARGS="$BUILD_ARGS -var $var"
-            done
-        fi
-
-        PACKER_LOG=<< parameters.packer_log >> ~/packer/packer build $BUILD_ARGS << parameters.path >> | tee << parameters.out_path >>/<< parameters.out_log >>
+      command: << include(scripts/packer_build.sh) >>
   - store_artifacts:
       name: "Store log file"
       path: << parameters.out_path >>/<< parameters.out_log >>
