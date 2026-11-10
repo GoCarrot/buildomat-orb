@@ -16,8 +16,6 @@
 
 require 'yaml'
 
-# Packer's ansible provisioner inherits the step's env. These two settings stop a lost first
-# ssh connection from sending ansible's interpreter discovery to a nonexistent /usr/bin/python.
 RSpec.describe 'src/commands/packer-build.yml' do
   command = YAML.safe_load_file(File.expand_path('../src/commands/packer-build.yml', __dir__))
   build_env = command['steps'].filter_map { |s| s['run'] }.find { |r| r['name'] == 'Packer Build' }['environment']
