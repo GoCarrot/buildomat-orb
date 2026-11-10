@@ -72,7 +72,6 @@ RSpec.describe 'packer_build.sh (behavioral)' do
     expect(argv(stdout)).to eq(['build', '-color=false', '-timestamp-ui', 'packer'])
   end
 
-  # The params taro passes today.
   it 'passes only, except and each comma separated var as its own arg' do
     stdout, _, status = run_step('I_ONLY' => 'amazon-ebs.base', 'I_EXCEPT' => 'vagrant.*',
                                  'I_VAR' => 'region=us-west-2,build_from_account=development-ci-cd')
